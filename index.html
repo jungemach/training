@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<meta name="theme-color" content="#0b1220" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="mobile-web-app-capable" content="yes" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icon-192.png" />
+<title>Training</title>
+<style>
+:root{
+  --bg:#0b1220;--bg2:#0f172a;--panel:rgba(255,255,255,.045);--panel-hi:rgba(255,255,255,.09);
+  --text:#f8fafc;--muted:#94a3b8;--muted2:#cbd5e1;--border:rgba(255,255,255,.10);
+  --c1:#38bdf8;--c2:#22c55e;--rest1:#64748b;--rest2:#94a3b8;
+  --r:18px;
+}
+body[data-cat=kraft] {--c1:#38bdf8;--c2:#22c55e}
+body[data-cat=alltag]{--c1:#a78bfa;--c2:#38bdf8}
+body[data-cat=hotel] {--c1:#fbbf24;--c2:#f97316}
+body[data-cat=kardio]{--c1:#fb7185;--c2:#f97316}
+
+*{box-sizing:border-box}
+html,body{height:100%;max-width:100%;overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--text);-webkit-text-size-adjust:100%;
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  background-image:radial-gradient(120% 60% at 50% -10%,rgba(56,189,248,.10),transparent 60%);
+  hyphens:none;overflow-wrap:anywhere}
+button,select,input{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;touch-action:manipulation}
+:focus-visible{outline:2px solid var(--c1);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ================= Auswahl ================= */
+#setupScreen{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;
+  padding:max(32px,calc(14px + env(safe-area-inset-top,0px))) 16px calc(24px + env(safe-area-inset-bottom,0px))}
+body.detail #setupScreen,body.run #setupScreen,body.reading #setupScreen{display:none}
+
+/* ---------- Ebene 2: Trainingsdetails im Vollbild ---------- */
+#detailScreen{position:fixed;inset:0;z-index:10;display:none;flex-direction:column;overflow:hidden;background:var(--bg);
+  background-image:radial-gradient(120% 55% at 50% 0%,color-mix(in srgb,var(--c1) 13%,transparent),transparent 65%);
+  padding:max(32px,calc(12px + env(safe-area-inset-top,0px))) calc(16px + env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}
+body.detail{overflow:hidden;position:fixed;inset:0;width:100%;overscroll-behavior:none}
+body.detail #detailScreen{display:flex}
+body.run #detailScreen,body.reading #detailScreen{display:none}
+@media(orientation:landscape){#detailScreen{padding-top:max(14px,env(safe-area-inset-top,0px))}}
+.detail-inner{width:100%;max-width:560px;margin:0 auto;display:flex;flex-direction:column;min-height:0;flex:1 1 auto}
+.detail-top{flex:0 0 auto;display:flex;align-items:center;gap:10px;min-width:0;margin-bottom:12px}
+.detail-title{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:17px;font-weight:800;letter-spacing:-.025em}
+.detail-time{margin-left:auto;flex:0 0 auto;color:var(--c1);font-size:15px;font-weight:800;font-variant-numeric:tabular-nums}
+.detail-body{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.detail-meta{color:var(--muted);font-size:14px;line-height:1.5;margin:0 0 14px}
+.detail-foot{flex:0 0 auto;padding-top:12px}
+.detail-foot[hidden]{display:none}
+.steps{border:1px solid var(--border);border-radius:14px;overflow:hidden;margin:14px 0 0}
+.steps-head{display:flex;justify-content:space-between;gap:8px;padding:11px 14px;
+  color:var(--muted2);font-size:14px;background:var(--panel)}
+.head{display:flex;flex-direction:column;align-items:flex-start;gap:3px;margin-bottom:14px;min-width:0;max-width:100%}
+.head h1{margin:0;font-weight:800;letter-spacing:-.03em;line-height:1.1;max-width:100%;
+  font-size:clamp(20px,6.2vw,26px);overflow-wrap:break-word}
+.head .dot-sep{color:var(--muted);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.tabs{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 14px;padding:0 16px 2px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;padding:8px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--border);
+  color:var(--muted2);font-size:14px;font-weight:600}
+.tab[aria-selected=true]{background:linear-gradient(135deg,var(--c1),var(--c2));color:#0b1220;border-color:transparent}
+
+.cards{display:flex;flex-direction:column;gap:8px;min-width:0}
+.wcard{display:block;width:100%;text-align:left;background:var(--panel);border:1px solid var(--border);
+  border-radius:var(--r);padding:13px 14px}
+.wcard[aria-pressed=true]{background:var(--panel-hi);border-color:color-mix(in srgb,var(--c1) 55%,transparent);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--c1) 35%,transparent) inset}
+.wtop{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
+.wname{font-size:16px;font-weight:700;letter-spacing:-.01em;line-height:1.25;min-width:0;overflow-wrap:break-word}
+.wtime{font-size:15px;font-weight:800;letter-spacing:-.02em;color:var(--c1);white-space:nowrap}
+.wmeta{color:var(--muted);font-size:13px;line-height:1.4;margin-top:5px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wbar{display:block;height:3px;border-radius:2px;background:rgba(255,255,255,.08);margin-top:10px;overflow:hidden}
+.wbar i{display:block;height:100%;background:linear-gradient(90deg,var(--c1),var(--c2));border-radius:2px}
+
+.opts{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 0}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:999px;
+  background:var(--panel);border:1px solid var(--border);color:var(--muted2);font-size:13px;user-select:none;cursor:pointer}
+.chip:has(input:checked){color:var(--text);border-color:color-mix(in srgb,var(--c1) 45%,transparent);
+  background:color-mix(in srgb,var(--c1) 12%,var(--panel))}
+.chip.off{opacity:.4;cursor:not-allowed}
+.chip input{accent-color:var(--c1);margin:0}
+
+.list{margin:0;padding:0;list-style:none;border-top:1px solid var(--border)}
+.list li{border-top:1px solid var(--border);color:var(--muted2)}
+.list li.active{background:color-mix(in srgb,var(--c1) 14%,transparent);color:var(--text)}
+.list .row{display:grid;grid-template-columns:26px 1fr auto 14px;gap:10px;align-items:center;
+  padding:10px 14px;font-size:14px;cursor:pointer;width:100%;text-align:left}
+.list .n,.list .d{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.list .chev{color:var(--muted);font-size:11px;transition:transform .15s ease}
+.list li.open .chev{transform:rotate(90deg)}
+.list .exp{display:none;padding:0 14px 13px 50px}
+.list li.open .exp{display:block}
+.exp p{margin:0 0 10px;color:var(--muted);font-size:13px;line-height:1.55}
+.exp .start{padding:7px 13px;border-radius:999px;font-size:13px;color:var(--text);
+  background:color-mix(in srgb,var(--c1) 16%,var(--panel));border:1px solid color-mix(in srgb,var(--c1) 40%,transparent)}
+.exp .none{font-style:italic}
+
+.note{color:var(--muted);font-size:12px;line-height:1.5;margin:16px 2px 0}
+.note b{color:var(--muted2);font-weight:600}
+.kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:rgba(255,255,255,.08);
+  padding:1px 5px;border-radius:5px;border:1px solid var(--border);font-size:11px}
+.foot{display:flex;gap:10px}
+#goBtn{flex:1;min-height:56px;border-radius:16px;background:linear-gradient(135deg,var(--c1),var(--c2));
+  color:#08111f;font-weight:800;font-size:17px;letter-spacing:-.01em;display:flex;align-items:center;justify-content:center;gap:10px}
+#goBtn .t{font-variant-numeric:tabular-nums;opacity:.72;font-weight:700}
+#goBtn:active{filter:brightness(.94)}
+
+/* ================= Training ================= */
+#runScreen{display:none;position:fixed;inset:0;flex-direction:column;gap:10px;overflow:hidden;background:var(--bg);
+  background-image:radial-gradient(120% 55% at 50% 0%,color-mix(in srgb,var(--c1) 14%,transparent),transparent 65%);
+  padding:max(34px,calc(12px + env(safe-area-inset-top,0px))) calc(14px + env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) calc(14px + env(safe-area-inset-left,0px))}
+@media(orientation:landscape){#runScreen{padding-top:max(14px,env(safe-area-inset-top,0px))}}
+body.run{overflow:hidden;position:fixed;inset:0;width:100%;overscroll-behavior:none}
+body.run #runScreen{display:flex}
+body.run #setupScreen{display:none}
+.run-top{flex:0 0 auto;display:flex;align-items:center;gap:6px;flex-wrap:nowrap;min-width:0}
+.run-top>*{flex:0 0 auto;white-space:nowrap}
+.run-top .phase{flex:0 1 auto;min-width:0;overflow:hidden}
+.run-top #phaseText{overflow:hidden;text-overflow:ellipsis}
+.run-step{margin-left:auto}
+.phase{display:inline-flex;gap:8px;align-items:center;color:var(--muted2);font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;font-size:11px;border:1px solid var(--border);border-radius:999px;padding:6px 11px;background:var(--panel)}
+.pdot{width:8px;height:8px;border-radius:50%;background:var(--c2);box-shadow:0 0 0 4px color-mix(in srgb,var(--c2) 18%,transparent)}
+.rest .pdot{background:var(--rest2);box-shadow:0 0 0 4px rgba(148,163,184,.16)}
+.run-step{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.now{color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.phase{padding:6px 9px;font-size:10px;letter-spacing:.04em;gap:6px}
+.pdot{width:7px;height:7px}
+.run-step{font-size:11.5px}
+.exit{padding:6px 10px;font-size:12px}
+.ibtn{width:28px;height:28px;font-size:13px}
+@media(max-width:380px){
+  .phase{font-size:9.5px;padding:5px 8px}
+  .exit{padding:5px 9px;font-size:11.5px}
+  .run-step,.now{font-size:11px}
+}
+.exit{padding:7px 13px;border-radius:999px;background:var(--panel);border:1px solid var(--border);color:var(--muted2);font-size:13px}
+.run-main{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;overflow:hidden;width:100%}
+.exercise{flex:0 0 auto;font-weight:800;line-height:1.15;letter-spacing:-.03em;max-width:100%;
+  font-size:clamp(18px,3.9vh,32px);font-size:min(clamp(18px,3.9dvh,32px),6.2vw);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
+  padding-bottom:.12em}
+.hint{flex:0 1 auto;color:var(--muted);line-height:1.45;max-width:34ch;margin-top:8px;
+  font-size:clamp(12px,1.8vh,15px);font-size:min(clamp(12px,1.8dvh,15px),3.9vw);
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.clock{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";font-weight:800;letter-spacing:-.055em;
+  flex:0 0 auto;white-space:nowrap;line-height:1;
+  font-size:clamp(44px,14vh,128px);font-size:min(clamp(44px,14dvh,128px),23vw);
+  margin-top:clamp(6px,2.2vh,24px);margin-top:clamp(6px,2.2dvh,24px);
+  background:linear-gradient(180deg,#fff,color-mix(in srgb,var(--c1) 60%,#fff));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+#runScreen.rest .clock{background:linear-gradient(180deg,#e2e8f0,#94a3b8);-webkit-background-clip:text;background-clip:text}
+.clock.urgent{background:linear-gradient(180deg,#fff,#fbbf24);-webkit-background-clip:text;background-clip:text}
+.run-bottom{flex:0 0 auto;display:flex;flex-direction:column;gap:11px}
+.track{height:10px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
+.track i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--c1),var(--c2));
+  transition:width .2s linear}
+#runScreen.rest .track i{background:linear-gradient(90deg,var(--rest1),var(--rest2))}
+.info{display:flex;justify-content:space-between;gap:12px;color:var(--muted);font-size:12.5px}
+.info span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.info b{color:var(--muted2);font-weight:600}
+.controls{display:grid;grid-template-columns:1fr 1.35fr 1fr;gap:9px}
+.controls button{min-height:52px;border-radius:15px;background:var(--panel);border:1px solid var(--border);font-size:15px}
+.controls #startBtn{background:linear-gradient(135deg,var(--c1),var(--c2));color:#08111f;font-weight:800;border:0;font-size:17px}
+.controls button:active{filter:brightness(.94)}
+.ibtn{width:34px;height:34px;flex:0 0 auto;border-radius:50%;background:var(--panel);border:1px solid var(--border);
+  color:var(--muted2);font-size:15px;font-weight:700;font-style:italic;line-height:1}
+.ibtn[hidden]{display:none}
+.reader{position:fixed;inset:0;z-index:15;display:none;flex-direction:column;gap:12px;overflow:hidden;
+  background:var(--bg);background-image:radial-gradient(120% 55% at 50% 0%,color-mix(in srgb,var(--c1) 13%,transparent),transparent 65%);
+  padding:max(34px,calc(12px + env(safe-area-inset-top,0px))) calc(16px + env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}
+body.reading{overflow:hidden;position:fixed;inset:0;width:100%;overscroll-behavior:none}
+body.reading .reader{display:flex}
+body.reading #setupScreen{display:none}
+@media(orientation:landscape){.reader{padding-top:max(14px,env(safe-area-inset-top,0px))}}
+.reader-top{flex:0 0 auto;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;min-width:0}
+.reader-top>*{flex:0 0 auto;white-space:nowrap}
+.reader-kicker{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--muted);
+  font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;
+  border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:var(--panel)}
+.reader-pos{margin-left:auto;color:var(--muted);font-size:11.5px;font-variant-numeric:tabular-nums}
+.reader-body{flex:1 1 auto;min-height:0;overflow:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;justify-content:center;padding:4px 2px}
+.reader-body.top{justify-content:flex-start}
+.reader-title{font-size:clamp(21px,3.4vh,30px);font-size:min(clamp(21px,3.4dvh,30px),7vw);font-weight:800;
+  letter-spacing:-.025em;line-height:1.18;margin:0 0 14px}
+.reader-text{color:var(--muted2);font-size:clamp(15px,2.1vh,18px);font-size:min(clamp(15px,2.1dvh,18px),4.4vw);
+  line-height:1.62;margin:0}
+.reader-nav{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.reader-nav button{min-height:52px;border-radius:15px;background:var(--panel);border:1px solid var(--border);font-size:15px}
+.reader-nav button:disabled{opacity:.35}
+.sheet{position:fixed;inset:0;z-index:20;display:none;align-items:flex-end;justify-content:center;
+  background:rgba(2,6,16,.62);backdrop-filter:blur(2px)}
+.sheet.on{display:flex}
+.sheet-card{width:100%;max-width:560px;background:#111a2b;border:1px solid var(--border);border-bottom:0;
+  border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));
+  max-height:78dvh;overflow:auto;box-shadow:0 -20px 60px rgba(0,0,0,.5)}
+.sheet-grab{width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.18);margin:0 auto 14px}
+.sheet-title{font-size:19px;font-weight:800;letter-spacing:-.02em;margin-bottom:10px}
+.sheet-text{color:var(--muted2);font-size:14.5px;line-height:1.6}
+.sheet-close{margin-top:16px;width:100%;min-height:46px;border-radius:14px;background:var(--panel);
+  border:1px solid var(--border);color:var(--muted2);font-size:15px}
+.mini{align-self:center;color:var(--muted);font-size:13px;padding:6px 14px;border-radius:999px;background:var(--panel);border:1px solid var(--border)}
+@media(max-height:540px){
+  .hint{display:none}
+  .clock{font-size:min(clamp(40px,12dvh,86px),20vw)}
+  #runScreen{gap:7px}
+  .controls button{min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){.track i{transition:none}}
+</style>
+</head>
+<body data-cat="kraft">
+
+<div id="setupScreen">
+  <div class="head">
+    <h1>Trainings-Timer</h1>
+    <div class="dot-sep">Training w&auml;hlen</div>
+  </div>
+
+  <div class="tabs" id="tabs" role="tablist"></div>
+  <div class="cards" id="cards"></div>
+</div>
+
+<div id="detailScreen">
+  <div class="detail-inner">
+    <div class="detail-top">
+      <button id="backBtn" class="exit">&#8249; Auswahl</button>
+      <div id="detailTitle" class="detail-title"></div>
+      <div id="detailTime" class="detail-time num"></div>
+    </div>
+
+    <div class="detail-body">
+      <p id="detailMeta" class="detail-meta"></p>
+
+      <div class="opts">
+        <label class="chip"><input id="soundToggle" type="checkbox" checked> Signalton</label>
+        <label class="chip" id="vibrateWrap"><input id="vibrateToggle" type="checkbox" checked> Vibration</label>
+        <label class="chip" id="restWrap"><input id="restToggle" type="checkbox" checked> Wechselzeiten</label>
+        <label class="chip" id="speakWrap"><input id="speakToggle" type="checkbox" checked> Ansage</label>
+      </div>
+
+      <div class="steps">
+        <div class="steps-head"><span id="summaryText">Übungen</span><span id="stepCount" class="num">0</span></div>
+        <ul id="exerciseList" class="list"></ul>
+      </div>
+
+      <p class="note">
+        <b>Zeiten sind Fenster.</b> Bist du früher fertig, tippe Weiter. Tippe eine Übung an für die Erklärung und um
+        festzulegen, wo begonnen wird; im Training führt das <i>i</i> oben zur selben Erklärung.
+        Tasten im Training: <span class="kbd">Leertaste</span> Start/Pause, <span class="kbd">←</span> <span class="kbd">→</span> Schritt,
+        <span class="kbd">R</span> von vorn, <span class="kbd">Esc</span> zurück.<br><br>
+        Kontrolliert ausführen, keine Pressatmung, bei Gelenkschmerz abbrechen. Intensität im Alltag 6–7/10,
+        im Haupttraining die letzten 2–3 Wiederholungen anstrengend, aber sauber.
+      </p>
+    </div>
+
+    <div id="detailFoot" class="detail-foot">
+      <div class="foot"><button id="goBtn">Training starten <span class="t num" id="goTime"></span></button></div>
+    </div>
+  </div>
+</div>
+
+<div id="runScreen">
+  <div class="run-top">
+    <div id="phase" class="phase"><span class="pdot"></span><span id="phaseText">Bereit</span></div>
+    <div id="stepInfo" class="run-step">1/1</div>
+    <div id="nowClock" class="now">--:--</div>
+    <button id="infoBtn" class="ibtn" aria-label="Übung erklären">i</button>
+    <button id="exitBtn" class="exit">&#8249; Zur&uuml;ck</button>
+  </div>
+
+  <div class="run-main">
+    <div id="exercise" class="exercise" aria-live="polite">–</div>
+    <div id="hint" class="hint"></div>
+    <div id="clock" class="clock" role="timer" aria-live="off">00:00</div>
+  </div>
+
+  <div class="run-bottom">
+    <div class="track"><i id="progress"></i></div>
+    <div class="info"><span id="nextUp">Danach: –</span><span id="totalInfo">Rest <b>00:00</b></span></div>
+    <div class="controls">
+      <button id="prevBtn">Zurück</button>
+      <button id="startBtn">Start</button>
+      <button id="nextBtn">Weiter</button>
+    </div>
+    <button id="resetBtn" class="mini">Von vorn beginnen</button>
+  </div>
+</div>
+
+<div id="reader" class="reader">
+  <div class="reader-top">
+    <div id="readerKicker" class="reader-kicker">Exercise-Snacks</div>
+    <div id="readerPos" class="reader-pos">1/1</div>
+    <button id="readerClose" class="exit">Schließen</button>
+  </div>
+  <div id="readerBody" class="reader-body">
+    <h2 id="readerTitle" class="reader-title"></h2>
+    <p id="readerText" class="reader-text"></p>
+  </div>
+  <div class="reader-nav">
+    <button id="readerPrev">Zurück</button>
+    <button id="readerNext">Weiter</button>
+  </div>
+</div>
+
+<div id="sheet" class="sheet">
+  <div class="sheet-card">
+    <div class="sheet-grab"></div>
+    <div id="sheetTitle" class="sheet-title"></div>
+    <div id="sheetText" class="sheet-text"></div>
+    <button id="sheetClose" class="sheet-close">Schließen</button>
+  </div>
+</div>
+
+<script>
+const workouts=[
+{id:"kraft_a",cat:"kraft",name:"Kraft · Haupttraining A",meta:"Druck & Beine: Kniebeuge, Brust, Schulterdrücken, Ausfallschritt, Curls, Rumpf. Danach 15 Minuten Kardio.",rest:0,steps:[
+{name:"Aufwärmen: Marsch + Schulterkreisen",seconds:180,hint:"Locker starten. Auf der Stelle gehen, Arme mitschwingen, Schultern mobilisieren."},
+{name:"Kniebeugen Satz 1",seconds:75,hint:"12–15 Wdh. Knie über dem Mittelfuß, Rumpf fest, Fersen bleiben am Boden."},
+{name:"Pause",seconds:90,hint:"Beine kurz ausschütteln."},
+{name:"Kniebeugen Satz 2",seconds:75,hint:"12–15 Wdh. Letzte Wiederholungen anstrengend, aber sauber."},
+{name:"Pause / Wechsel Brustübung",seconds:90,hint:"Bankdrücken ODER Butterfly vorbereiten."},
+{name:"Bankdrücken oder Butterfly Satz 1",seconds:60,hint:"12–15 Wdh. Kontrolliert, Schulter nicht hochziehen."},
+{name:"Pause",seconds:75,hint:"Kurz lockern, normal atmen."},
+{name:"Bankdrücken oder Butterfly Satz 2",seconds:60,hint:"12–15 saubere Wdh. Nicht pressen."},
+{name:"Pause / Wechsel Schulterdrücken",seconds:75,hint:"Kurzhanteln nehmen, im Sitzen oder Stehen."},
+{name:"Schulterdrücken Satz 1",seconds:60,hint:"10–12 Wdh. Über Kopf drücken, Rippen unten lassen, kein Hohlkreuz."},
+{name:"Pause",seconds:75,hint:"Schultern lockern."},
+{name:"Schulterdrücken Satz 2",seconds:60,hint:"10–12 Wdh. Ablassen langsamer als das Drücken."},
+{name:"Pause / Wechsel Ausfallschritt",seconds:75,hint:"Platz schaffen, ggf. Kurzhanteln an den Seiten."},
+{name:"Ausfallschritt Satz 1",seconds:75,hint:"Je Seite 8–10 Wdh. Oberkörper aufrecht, hinteres Knie tief."},
+{name:"Pause",seconds:75,hint:"Beine lockern."},
+{name:"Ausfallschritt Satz 2",seconds:75,hint:"Je Seite 8–10 Wdh. Kontrolliert absetzen, nicht fallen lassen."},
+{name:"Pause / Wechsel Kurzhanteln",seconds:60,hint:"Kurzhanteln für Curls nehmen."},
+{name:"Bizepscurls Satz 1",seconds:60,hint:"12–15 Wdh. Ellbogen ruhig am Körper, kein Oberkörperschwung."},
+{name:"Pause",seconds:60,hint:"Arme lockern."},
+{name:"Bizepscurls Satz 2",seconds:60,hint:"12–15 Wdh. Ablassen langsamer als das Anheben."},
+{name:"Pause / Wechsel Rumpf",seconds:60,hint:"Unterarmstütz vorbereiten."},
+{name:"Unterarmstütz Satz 1",seconds:30,hint:"30 Sek halten. Bauch und Gesäß fest, ruhig atmen."},
+{name:"Pause",seconds:45,hint:"Kurz lösen."},
+{name:"Unterarmstütz Satz 2",seconds:30,hint:"30 Sek halten. Qualität vor Dauer."},
+{name:"Pause",seconds:45,hint:"Bauchbeuge ODER Beinheben vorbereiten."},
+{name:"Bauchbeuge oder Beinheben Satz 1",seconds:45,hint:"Kontrolliert. Nur eine der beiden Übungen wählen."},
+{name:"Pause",seconds:45,hint:"Wenn genug, weiter zum Kardio. Sonst Satz 2."},
+{name:"Bauchbeuge oder Beinheben Satz 2 optional",seconds:45,hint:"Optional. Bei empfindlichem Rücken oder Hüfte überspringen."},
+{name:"Pause / Wechsel Kardio",seconds:90,hint:"Kraftteil beendet. Wenn gewünscht, leichte Handgelenksmanschetten anlegen, kurz trinken."},
+{name:"Kardio 1: Gehen auf der Stelle",seconds:180,hint:"Zügig, leise, Arme aktiv. Sprechen soll noch möglich sein. Mit Manschetten die Arme bewusst mitführen."},
+{name:"Kardio 2: Knieheben gelenkschonend",seconds:180,hint:"Knie kontrolliert heben, kein Springen, Arme gegengleich."},
+{name:"Kardio 3: Seitschritt-Tippen / Schritt zurück",seconds:180,hint:"Rhythmisch und leise. Auf engem Raum machbar."},
+{name:"Kardio 4: Marsch mit großen Armen",seconds:180,hint:"Puls moderat halten. Nicht stampfen."},
+{name:"Kardio 5: Ausklang + Wadenpumpe",seconds:180,hint:"Langsamer gehen, dann Wadenpumpe: Knie leicht gebeugt, Fersen langsam heben und senken."}
+]},
+{id:"kraft_b",cat:"kraft",name:"Kraft · Haupttraining B",meta:"Zug & Rumpf: Latziehen, Rudern, Kreuzheben, Beckenheben, Curls, Seitstütz. Danach 15 Minuten Kardio.",rest:0,steps:[
+{name:"Aufwärmen: Marsch + Schulterkreisen",seconds:180,hint:"Locker starten. Arme mitschwingen, Schulterblätter bewusst bewegen."},
+{name:"Latziehen Satz 1",seconds:60,hint:"12–15 Wdh. Zur Brust ziehen, zuerst Schulterblätter nach hinten und unten."},
+{name:"Pause",seconds:75,hint:"Atmung normalisieren. Widerstand prüfen."},
+{name:"Latziehen Satz 2",seconds:60,hint:"12–15 saubere Wdh. Kein Schwung, Nacken lang."},
+{name:"Pause / Wechsel Rudern",seconds:45,hint:"Nur umsetzen: mittlere Ebene, Handgriffe, andersherum sitzen. Gewicht prüfen."},
+{name:"Rudern Satz 1",seconds:60,hint:"12–15 Wdh. Ellbogen etwas außen führen, Schulterblätter zusammen und nach unten."},
+{name:"Pause",seconds:75,hint:"Kurz lockern."},
+{name:"Rudern Satz 2",seconds:60,hint:"12–15 Wdh. Oberkörper aufrecht, kein Zurücklehnen. Weniger Gewicht als beim Latziehen."},
+{name:"Pause / Wechsel Kreuzheben",seconds:90,hint:"Kurzhanteln vor die Oberschenkel nehmen."},
+{name:"Kurzhantel-Kreuzheben Satz 1",seconds:75,hint:"10–12 Wdh. Hüftbeuge-Muster: Gesäß nach hinten, Rücken lang, Hanteln nah am Bein."},
+{name:"Pause",seconds:90,hint:"Kurz aufrichten, Rücken lösen."},
+{name:"Kurzhantel-Kreuzheben Satz 2",seconds:75,hint:"10–12 Wdh. Nur so tief, wie der Rücken neutral bleibt."},
+{name:"Pause / Wechsel Beckenheben",seconds:75,hint:"Auf Matte oder stabile Unterlage wechseln."},
+{name:"Beckenheben Satz 1",seconds:60,hint:"12–15 Wdh. Oben 1–2 Sek halten, aus dem Gesäß arbeiten."},
+{name:"Pause",seconds:60,hint:"Kurz lösen."},
+{name:"Beckenheben Satz 2",seconds:60,hint:"12–15 Wdh. Kein Hohlkreuz, Rippen unten lassen."},
+{name:"Pause / Wechsel Kurzhanteln",seconds:60,hint:"Kurzhanteln für Curls nehmen."},
+{name:"Bizepscurls Satz 1",seconds:60,hint:"12–15 Wdh. Ellbogen ruhig, kein Oberkörperschwung."},
+{name:"Pause",seconds:60,hint:"Arme lockern."},
+{name:"Bizepscurls Satz 2",seconds:60,hint:"12–15 Wdh. Langsam und kontrolliert ablassen."},
+{name:"Pause / Wechsel Rumpf",seconds:60,hint:"Seitstütz vorbereiten."},
+{name:"Seitstütz links",seconds:30,hint:"30 Sek. Auf Unterarm und Knie oder Fuß, Becken oben halten."},
+{name:"Pause",seconds:30,hint:"Seite wechseln."},
+{name:"Seitstütz rechts",seconds:30,hint:"30 Sek. Gleiche Höhe wie links, nicht absacken."},
+{name:"Pause",seconds:45,hint:"Unterarmstütz vorbereiten."},
+{name:"Unterarmstütz Satz 1",seconds:30,hint:"30 Sek halten. Bauch und Gesäß fest."},
+{name:"Pause",seconds:45,hint:"Kurz lösen."},
+{name:"Unterarmstütz Satz 2",seconds:30,hint:"30 Sek halten. Qualität vor Dauer."},
+{name:"Pause / Wechsel Kardio",seconds:90,hint:"Kraftteil beendet. Wenn gewünscht, leichte Handgelenksmanschetten anlegen, kurz trinken."},
+{name:"Kardio 1: Gehen auf der Stelle",seconds:180,hint:"Zügig, leise, Arme aktiv. Mit Manschetten die Arme bewusst mitführen."},
+{name:"Kardio 2: Seitschritt-Tippen",seconds:180,hint:"Rhythmisch, Knie weich, leises Aufsetzen."},
+{name:"Kardio 3: Schattenboxen",seconds:180,hint:"Gerade Schläge im Wechsel, Beine federn leicht mit."},
+{name:"Kardio 4: Marsch mit großen Armen",seconds:180,hint:"Puls moderat halten, gleichmäßig atmen."},
+{name:"Kardio 5: Ausklang + Wadenpumpe",seconds:180,hint:"Langsamer gehen, dann Wadenpumpe: Fersen langsam heben und senken."}
+]},
+{id:"bioforce_short",cat:"kraft",name:"Kraft · Kurzversion",meta:"Kompakte Einheit am Bioforce ohne langen Kardio-Block. Gut, wenn wenig Zeit ist.",rest:0,steps:[
+{name:"Aufwärmen",seconds:120,hint:"Marsch auf der Stelle, Schultern locker, Hüfte mobilisieren."},
+{name:"Latziehen Satz 1",seconds:60,hint:"12–15 Wdh. Schulterblätter aktiv."},
+{name:"Pause",seconds:60,hint:"Kurz atmen."},
+{name:"Rudern Satz 1",seconds:60,hint:"12–15 Wdh. Handgriffe auf Schulterhöhe, Schulterblätter zusammenziehen."},
+{name:"Wechsel Brust",seconds:60,hint:"Bankdrücken ODER Butterfly."},
+{name:"Brust Satz 1",seconds:60,hint:"12–15 Wdh."},
+{name:"Pause",seconds:60,hint:"Kurz lockern."},
+{name:"Brust Satz 2",seconds:60,hint:"12–15 Wdh."},
+{name:"Wechsel Beine",seconds:60,hint:"Kniebeugen vorbereiten."},
+{name:"Kniebeugen Satz 1",seconds:75,hint:"12–15 Wdh. Tiefe so weit, wie der Rücken neutral bleibt."},
+{name:"Pause",seconds:75,hint:"Beine lockern."},
+{name:"Kniebeugen Satz 2",seconds:75,hint:"12–15 Wdh. Letzte Wiederholungen anstrengend, aber sauber."},
+{name:"Bizepscurls Satz 1",seconds:60,hint:"12–15 Wdh."},
+{name:"Pause",seconds:45,hint:"Arme lockern."},
+{name:"Bizepscurls Satz 2",seconds:60,hint:"12–15 Wdh."},
+{name:"Beckenheben Satz 1",seconds:60,hint:"12–15 Wdh."},
+{name:"Pause",seconds:45,hint:"Kurz lösen."},
+{name:"Beckenheben Satz 2",seconds:60,hint:"12–15 Wdh."},
+{name:"Unterarmstütz 1",seconds:30,hint:"30 Sek halten."},
+{name:"Pause",seconds:30,hint:"Kurz lösen."},
+{name:"Unterarmstütz 2",seconds:30,hint:"30 Sek halten."},
+{name:"Pause / Wechsel Kardio",seconds:60,hint:"Kurz durchatmen. Wenn gewünscht, leichte Handgelenksmanschetten anlegen."},
+{name:"Kardio kurz: Marsch + Wadenpumpe",seconds:300,hint:"5 Minuten: leises Gehen auf der Stelle, am Ende Wadenpumpe."}
+]},
+{id:"morning",cat:"alltag",name:"Alltag · Morgen A",meta:"Zirkel: 5 Übungen in 2 Runden à 45 Sekunden, danach Wadenpumpe. Alles im Stehen und an der Wand.",rest:10,steps:[
+{name:"Knie zum Ellbogen",seconds:45,hint:"Knie und gegenüberliegenden Ellbogen kontrolliert zusammenführen."},{name:"Wandliegestütze",seconds:45,hint:"Hände an die Wand, Körperlinie halten."},{name:"Isometrische Kniebeuge",seconds:45,hint:"Halbe Sitzposition halten, ruhig atmen."},{name:"Hüftbeuge",seconds:45,hint:"Po weit nach hinten, Rücken neutral."},{name:"Unterarmstütz an der Wand",seconds:45,hint:"Bauch und Gesäß fest."},{name:"Knie zum Ellbogen",seconds:45,hint:"Zweite Runde."},{name:"Wandliegestütze",seconds:45,hint:"Schultern nicht hochziehen."},{name:"Isometrische Kniebeuge",seconds:45,hint:"Spannung halten."},{name:"Hüftbeuge",seconds:45,hint:"Aus Gesäß/Hüfte wieder hoch."},{name:"Unterarmstütz an der Wand",seconds:45,hint:"Core stabilisieren."},{name:"Wadenpumpe",seconds:90,hint:"Knie leicht gebeugt, Fersen langsam heben und senken."}
+]},
+{id:"morning_b",cat:"alltag",name:"Alltag · Morgen B",meta:"Beweglichkeit, Gleichgewicht und Kreislauf statt Zirkel. Jede Übung nur einmal, alles im Stehen – badezimmertauglich.",rest:10,steps:[
+{name:"Wirbelsäule aufwecken",seconds:45,hint:"Im Stand langsam rund machen, Wirbel für Wirbel aufrichten, leicht strecken. Zweimal ruhig durchgehen."},
+{name:"Schulter- und Brustwirbelsäulen-Mobilisation",seconds:45,hint:"Große Schulterkreise, dann den Oberkörper aus der Brustwirbelsäule nach links und rechts drehen."},
+{name:"Hüfte mobilisieren",seconds:45,hint:"Hüftkreise in beide Richtungen, danach Knie im Wechsel anheben und locker kreisen lassen."},
+{name:"Marsch mit großen Armen",seconds:60,hint:"Kreislauf hochfahren. Arme über Schulterhöhe mitführen, leise auftreten."},
+{name:"Hüftstreckung im Stand",seconds:50,hint:"Je Seite 25 Sek: an der Wand abstützen, ein Bein gestreckt nach hinten führen, Gesäß bewusst anspannen. Becken bleibt gerade, kein Hohlkreuz."},
+{name:"Seitstütz an der Wand links",seconds:30,hint:"Seitlich zur Wand, Unterarm auf Schulterhöhe anlegen, Füße ein Stück weg. Hüfte zur Wand drücken und die Linie halten."},
+{name:"Seitstütz an der Wand rechts",seconds:30,hint:"Gleicher Abstand wie links. Hüfte nicht durchhängen lassen, ruhig weiteratmen."},
+{name:"Schritt zurück",seconds:50,hint:"Im Wechsel je Seite: kleiner Schritt nach hinten, hinteres Knie beugen, kontrolliert zurück."},
+{name:"Wandliegestütze langsam",seconds:45,hint:"3 Sekunden runter, 3 Sekunden hoch. Schultern tief lassen."},
+{name:"Einbeinstand",seconds:45,hint:"Je Seite gut 20 Sekunden. Wer mag, dreht dabei langsam den Kopf oder schließt die Augen."},
+{name:"Wadenpumpe",seconds:90,hint:"Knie leicht gebeugt, Fersen langsam heben und senken. Ruhiger, gleichmäßiger Rhythmus."},
+{name:"Aufrechter Stand und Atmung",seconds:30,hint:"4 Sekunden ein, 6 Sekunden aus. Einmal bewusst lang machen, dann in den Tag."}
+]},
+{id:"office",cat:"alltag",name:"Alltag · Büro",meta:"Komplett sitzend, diskret am Schreibtisch.",rest:20,steps:[
+{name:"Sitzendes Marschieren",seconds:40,hint:"Aufrecht sitzen, Knie zügig anheben."},{name:"Isometrischer Tisch-Zug",seconds:40,hint:"Unter der Tischkante ziehen, Schultern tief."},{name:"Sitzender Core-Halt",seconds:40,hint:"Bauch fest, nicht pressen."},{name:"Isometrischer Brust-Press",seconds:40,hint:"Handflächen gegeneinander drücken."},{name:"Wadenpumpe sitzend",seconds:40,hint:"Fersen langsam heben/senken."}
+]},
+{id:"evening5",cat:"alltag",name:"Alltag · Abend kurz",meta:"Die Kurzfassung für späte Abende: das Wichtigste in fünf Minuten.",rest:15,steps:[
+{name:"Ruhiger Seitschritt-Tippen",seconds:30,hint:"Kleine, leise Schritte im Stand. Tempo bewusst niedrig, nur locker werden."},
+{name:"Wandliegestütze langsam",seconds:30,hint:"3 Sekunden runter, 3 Sekunden hoch. Ohne Anstrengungsgefühl, Schultern tief."},
+{name:"Langsame halbe Kniebeuge",seconds:30,hint:"Halbe Tiefe, betont langsam. Atmung ruhig weiterlaufen lassen."},
+{name:"Rumpfrotation im Stand",seconds:30,hint:"Becken bleibt ruhig, Oberkörper dreht langsam mit dem Blick."},
+{name:"Wadenpumpe",seconds:60,hint:"Knie leicht gebeugt, Fersen langsam heben und senken. Nach dem Abendessen besonders sinnvoll."},
+{name:"Ruhiger Stand und Atmung",seconds:45,hint:"4 Sekunden ein, 6 bis 8 Sekunden aus. Ausatmen bewusst länger als einatmen."}
+]},
+{id:"evening10",cat:"alltag",name:"Alltag · Abend A",meta:"Mobilisation und ruhige Kräftigung, dann Wadenpumpe und Atemabschluss. Alles im Stehen und an der Wand.",rest:15,steps:[
+{name:"Ruhiges Gehen auf der Stelle",seconds:30,hint:"Ganz locker starten, Arme mitschwingen. Kein Tempo aufbauen."},
+{name:"Schulter und Nacken lösen",seconds:45,hint:"Große, langsame Schulterkreise. Kopf ruhig zu beiden Seiten neigen."},
+{name:"Wirbelsäulenmobilisation",seconds:45,hint:"Wirbel für Wirbel rund machen, wieder aufrichten, leicht strecken. Schmerzfrei bleiben."},
+{name:"Wandliegestütze langsam",seconds:30,hint:"3 Sekunden runter, 3 Sekunden hoch. Bewusst ohne Anstrengung."},
+{name:"Langsame halbe Kniebeuge",seconds:30,hint:"Halbe Tiefe, betont langsam. Atmung ruhig weiterlaufen lassen."},
+{name:"Hüftbeuge ruhig",seconds:30,hint:"Po nach hinten, Rücken lang. Nur bis zum leichten Zug, nicht weiter."},
+{name:"Rumpfrotation im Stand",seconds:30,hint:"Becken bleibt ruhig, Oberkörper dreht langsam mit dem Blick."},
+{name:"Unterarmstütz an der Wand ruhig",seconds:30,hint:"Unterarme an die Wand, Körper eine Linie, gleichmäßig atmen. Keine Pressatmung."},
+{name:"Wadenpumpe",seconds:60,hint:"Fersen langsam heben und senken, ruhiger Rhythmus. Zieht Glukose in die Wadenmuskulatur."},
+{name:"Wadendehnung an der Wand",seconds:30,hint:"Ein Bein nach hinten, Ferse zum Boden, 15 Sekunden je Seite."},
+{name:"Ruhiger Stand und Atmung",seconds:90,hint:"4 Sekunden ein, 6 bis 8 Sekunden aus. Der lange Ausatem bringt den Puls herunter."}
+]},
+{id:"evening10b",cat:"alltag",name:"Alltag · Abend B",meta:"Dehnen und Entspannen statt Kräftigen: Brust, Hüfte, Beine, Wadenpumpe, Atemabschluss. Nur Wand oder Türrahmen.",rest:15,steps:[
+{name:"Ankommen: lockeres Gehen",seconds:45,hint:"Auf der Stelle gehen, Tempo bewusst niedrig. Der Tag darf hier aufhören."},
+{name:"Nacken und Schultern lösen",seconds:45,hint:"Schultern hochziehen und fallen lassen, Kopf langsam zu beiden Seiten neigen. Nicht ziehen, nicht federn."},
+{name:"Brustöffnung an der Wand",seconds:60,hint:"Je Seite 30 Sek: Unterarm an den Türrahmen oder die Wand, Brustbein langsam wegdrehen. Leichter Zug vorn an der Brust, kein Schmerz."},
+{name:"Seitneigung im Stand",seconds:30,hint:"Einen Arm über den Kopf, zur Gegenseite neigen, kurz halten, Seite wechseln. Becken bleibt stehen."},
+{name:"Hüftbeuger dehnen",seconds:60,hint:"Je Seite 30 Sek: Schrittstellung, Becken leicht aufrichten und nach vorn schieben. Zug vorn an der Hüfte des hinteren Beins."},
+{name:"Oberschenkelrückseite dehnen",seconds:60,hint:"Je Seite 30 Sek: Ferse vor sich aufsetzen, Fußspitze hoch, Gesäß nach hinten schieben. Rücken bleibt lang."},
+{name:"Wadendehnung an der Wand",seconds:45,hint:"Je Seite gut 20 Sek: Hände an die Wand, ein Bein nach hinten, Ferse zum Boden, Knie gestreckt."},
+{name:"Wadenpumpe",seconds:90,hint:"Knie leicht gebeugt, Fersen langsam heben und senken. Nach dem Abendessen besonders sinnvoll."},
+{name:"Verlängerte Ausatmung",seconds:45,hint:"4 Sekunden ein, 8 Sekunden aus. Der lange Ausatem senkt Puls und Anspannung."}
+]},
+{id:"snacks",cat:"alltag",name:"Alltag · Exercise-Snacks",meta:"Kurze Belastungen für zwischendurch – ohne Timer, einfach zum Nachlesen.",rest:0,steps:[],notes:[
+{t:"Das Prinzip",x:"Ein Exercise-Snack ist eine kurze, zügige Belastung von etwa 20 Sekunden bis 2 Minuten, mehrmals über den Tag verteilt. Entscheidend ist nicht die Dauer, sondern dass der Kreislauf kurz deutlich hochgeht. Mehrere solche Einheiten pro Tag verbessern Ausdauer und Blutzuckerverwertung messbar – auch dann, wenn sie zusammengenommen kürzer sind als ein reguläres Training. Es gibt keine Mindestdauer, ab der es sich lohnt."},
+{t:"Beim Spaziergang: Tempowechsel",x:"Die einfachste Form: von Laterne zu Laterne zügig gehen, die nächste Strecke locker. Vier bis sechs solcher Wechsel pro Runde genügen. Zügig heißt: Sprechen wird kurzatmig, aber möglich. Braucht keine Uhr und fällt niemandem auf."},
+{t:"Beim Spaziergang: Steigungen suchen",x:"Jede Steigung, Rampe oder Brücke bewusst zügig nehmen, oben locker weitergehen. Bergauf erreichst du bei gleichem Tempo eine deutlich höhere Belastung als in der Ebene – ohne dass es nach Training aussieht."},
+{t:"Treppen statt Umweg",x:"Unterführungen, Bahnhofstreppen, Parkhaustreppen: zügig hoch, ruhig wieder runter. Zwei Etagen im flotten Tempo sind ein vollwertiger Snack. Abwärts bewusst kontrolliert, das ist die Belastung für die Kniestrecker."},
+{t:"Wartezeiten: Wadenpumpe",x:"An der Ampel, an der Bordsteinkante, beim Warten auf den Hund: Knie leicht gebeugt, Fersen langsam heben und senken. 30 bis 60 Wiederholungen. Der Schollenmuskel zieht dabei Glukose direkt aus dem Blut – nach dem Essen besonders wirksam und von außen kaum sichtbar."},
+{t:"Wartezeiten: Einbeinstand",x:"Beim Stehenbleiben auf ein Bein wechseln, 20 bis 30 Sekunden je Seite. Wer es schwerer will, schließt die Augen oder dreht den Kopf langsam. Gleichgewicht ist die Fähigkeit, die ab der Lebensmitte am schnellsten nachlässt und sich am leichtesten nebenbei erhalten lässt."},
+{t:"Parkbank: Liegestütze",x:"Hände auf die Rückenlehne oder Sitzfläche, Körper gerade, 10 bis 15 kontrollierte Wiederholungen. Je tiefer die Auflage, desto schwerer. Sitzfläche ist deutlich anspruchsvoller als Lehne."},
+{t:"Parkbank: Ausfallschritt und Aufstehen",x:"Hinteres Bein auf die Bank, vorderes Knie kontrolliert beugen – oder schlicht mehrmals hintereinander von der Bank aufstehen und hinsetzen, ohne Hände. Acht bis zehn Wiederholungen je Seite."},
+{t:"Mit Hund: die Wartephasen nutzen",x:"Während der Hund schnüffelt oder markiert, sind das die natürlichen Pausen: Wadenpumpe, Einbeinstand, Schulterkreise. Die Zeit ist ohnehin da – sie wird sonst nur im Stehen verbracht."},
+{t:"Mit Hund: Kniebeuge statt Bücken",x:"Beim Aufheben des Balls, der Leine oder beim Aufsammeln bewusst in die Kniebeuge gehen statt sich vornüberzubeugen. Bei mehreren Wiederholungen pro Runde kommt so beiläufig ein kompletter Kniebeugensatz zusammen – und es ist gleichzeitig das rückenfreundlichere Muster."},
+{t:"Mit Hund: Sprintphasen",x:"Wenn der Hund ohnehin losläuft, kurz mitgehen oder mitlaufen – 15 bis 20 Sekunden zügig genügen. Für den Hund ist es Spiel, für dich ein Intervall."},
+{t:"Rucksack oder Einkaufstaschen",x:"Ein Rucksack mit 5 bis 8 kg macht aus einem normalen Spaziergang eine deutlich stärkere Belastung, ohne dass das Tempo steigen muss. Einkaufstaschen bewusst tragen statt fahren wirkt ähnlich und trainiert zusätzlich den Griff – die Griffkraft ist einer der besten Einzelindikatoren für die allgemeine Muskelkraft."},
+{t:"Gangvariationen",x:"Kurze Strecken auf den Zehenspitzen, danach auf den Fersen, jeweils 20 bis 30 Schritte. Oder eine kurze Passage rückwärts gehen, wo es sicher ist. Kostet nichts, beansprucht Unterschenkel und Fußgewölbe anders als der normale Gang."},
+{t:"Nach dem Essen",x:"Zehn bis fünfzehn Minuten zügiges Gehen innerhalb der ersten Stunde nach einer Mahlzeit dämpfen den Blutzuckeranstieg deutlich stärker als derselbe Spaziergang zu einer beliebigen anderen Tageszeit. Wenn irgendein Snack am Tag Priorität haben soll, dann dieser."},
+{t:"In der Praxis: zwischen zwei Terminen",x:"Treppe in den nächsten Stock und zurück. Oder zwanzig zügige Kniebeugen an der Tür. Oder im Sitzen der isometrische Tisch-Zug. Zwei Minuten genügen und wirken der Sitzzeit direkt entgegen."},
+{t:"Wie oft?",x:"Es gibt kein Soll. Drei bis fünf über den Tag verteilte Snacks sind ein gutes Ziel, aber jeder einzelne zählt für sich. Der Vorteil gegenüber einem festen Plan ist gerade, dass nichts ausfällt, wenn der Tag anders läuft als gedacht."}
+]},
+{id:"hotel15",cat:"hotel",name:"Hotel · Kurz",meta:"Leise, ohne Boden, ohne Geräte. Aktivierung, 2 Zirkelrunden, Wadenpumpe zum Abschluss.",rest:15,steps:[
+{name:"Aktivierung: Marsch auf der Stelle",seconds:60,hint:"Leise gehen, Arme aktiv mitschwingen. Puls langsam hochfahren."},
+{name:"Mobilisation Schulter und Hüfte",seconds:45,hint:"Große Schulterkreise, danach Hüfte locker kreisen. Nichts ziehen, nur bewegen."},
+{name:"Wandliegestütze",seconds:45,hint:"Hände schulterbreit an der Wand, Körper eine Linie. 2 Sekunden runter, 1 Sekunde hoch."},
+{name:"Isometrische Kniebeuge",seconds:45,hint:"Halbe Sitzposition an der Wand halten, Knie über dem Mittelfuß, ruhig weiteratmen."},
+{name:"Hüftbeuge",seconds:45,hint:"Po weit nach hinten, Rücken neutral, Zug in der Oberschenkelrückseite spüren."},
+{name:"Knie zum Ellbogen",seconds:45,hint:"Knie und gegenüberliegenden Ellbogen kontrolliert zusammenführen, Bauch fest."},
+{name:"Unterarmstütz an der Wand",seconds:45,hint:"Unterarme an die Wand, Körper schräg, Gesäß und Bauch anspannen."},
+{name:"Wandliegestütze",seconds:45,hint:"Runde 2. Weiter von der Wand weg = schwerer."},
+{name:"Isometrische Kniebeuge",seconds:45,hint:"Runde 2. Wenn die Oberschenkel brennen: Position minimal höher, nicht abbrechen."},
+{name:"Hüftbeuge",seconds:45,hint:"Runde 2. Bewegung kommt aus der Hüfte, nicht aus dem unteren Rücken."},
+{name:"Knie zum Ellbogen",seconds:45,hint:"Runde 2. Tempo etwas zügiger, Rumpf bleibt stabil."},
+{name:"Unterarmstütz an der Wand",seconds:45,hint:"Runde 2. Nicht ins Hohlkreuz absacken, gleichmäßig atmen."},
+{name:"Wadenpumpe",seconds:90,hint:"Knie leicht gebeugt, Fersen langsam heben und senken, ca. 1 Sekunde pro Richtung. Zieht Glukose in die Wadenmuskulatur."},
+{name:"Ruhiger Stand und Atmung",seconds:60,hint:"4 Sekunden ein, 6 bis 8 Sekunden aus. Puls kommt runter."}
+]},
+{id:"hotel30",cat:"hotel",name:"Hotel · Mittel",meta:"Zwei Kraftblöcke mit kurzem Kardio-Einschub, ruhiger Abschluss.",rest:15,steps:[
+{name:"Marsch auf der Stelle",seconds:60,hint:"Leise beginnen, Arme mitnehmen."},
+{name:"Schulter- und Brustwirbelsäulen-Mobilisation",seconds:60,hint:"Schulterkreise, dann Oberkörper langsam nach links und rechts drehen."},
+{name:"Hüftbeuge locker",seconds:60,hint:"Bewegungsmuster einschleifen: Po nach hinten, Rücken lang, ohne Tempo."},
+{name:"Wandliegestütze",seconds:45,hint:"Block 1, Runde 1. Körperlinie halten, Schultern nicht hochziehen."},
+{name:"Isometrische Kniebeuge",seconds:45,hint:"Block 1, Runde 1. Halten, ruhig atmen, keine Pressatmung."},
+{name:"Hüftbeuge",seconds:45,hint:"Block 1, Runde 1. Gesäß aktiv, Rücken neutral."},
+{name:"Knie zum Ellbogen",seconds:45,hint:"Block 1, Runde 1. Diagonal, Bauchspannung halten."},
+{name:"Unterarmstütz an der Wand",seconds:45,hint:"Block 1, Runde 1. Körper eine Linie, gleichmäßig atmen."},
+{name:"Wandliegestütze",seconds:45,hint:"Block 1, Runde 2. Körperlinie halten, Schultern nicht hochziehen."},
+{name:"Isometrische Kniebeuge",seconds:45,hint:"Block 1, Runde 2. Halten, ruhig atmen, keine Pressatmung."},
+{name:"Hüftbeuge",seconds:45,hint:"Block 1, Runde 2. Gesäß aktiv, Rücken neutral."},
+{name:"Knie zum Ellbogen",seconds:45,hint:"Block 1, Runde 2. Diagonal, Bauchspannung halten."},
+{name:"Unterarmstütz an der Wand",seconds:45,hint:"Block 1, Runde 2. Körper eine Linie, gleichmäßig atmen."},
+{name:"Kardio: Marsch mit großem Armeinsatz",seconds:90,hint:"Tempo 6 bis 7 von 10, leise bleiben. Sprechen soll noch möglich sein."},
+{name:"Kardio: Seitschritt-Tippen zügig",seconds:60,hint:"Seitlich antippen, rhythmisch, ohne Sprung."},
+{name:"Wandliegestütz halten",seconds:45,hint:"Block 2, Runde 1. Untere Position halten, Ellbogen nah am Körper."},
+{name:"Langsame halbe Kniebeuge",seconds:45,hint:"Block 2, Runde 1. 3 Sekunden runter, ruhig wieder hoch."},
+{name:"Schritt zurück",seconds:45,hint:"Block 2, Runde 1. Kleiner Schritt zurück, leise aufsetzen, Seiten wechseln."},
+{name:"Schulterblatt-Zug",seconds:45,hint:"Block 2, Runde 1. Arme wie beim Rudern zurückführen, Schulterblätter nach hinten und unten."},
+{name:"Wandliegestütz halten",seconds:45,hint:"Block 2, Runde 2. Untere Position halten, Ellbogen nah am Körper."},
+{name:"Langsame halbe Kniebeuge",seconds:45,hint:"Block 2, Runde 2. 3 Sekunden runter, ruhig wieder hoch."},
+{name:"Schritt zurück",seconds:45,hint:"Block 2, Runde 2. Kleiner Schritt zurück, leise aufsetzen, Seiten wechseln."},
+{name:"Schulterblatt-Zug",seconds:45,hint:"Block 2, Runde 2. Arme wie beim Rudern zurückführen, Schulterblätter nach hinten und unten."},
+{name:"Wadenpumpe",seconds:105,hint:"Fersen langsam heben und senken. Ruhiger, gleichmäßiger Rhythmus."},
+{name:"Wirbelsäulenmobilisation",seconds:60,hint:"Rund machen, aufrichten, leicht strecken. Langsam und schmerzfrei."},
+{name:"Ruhiger Stand und Atmung",seconds:120,hint:"4 Sekunden ein, 6 bis 8 Sekunden aus. Bewusst runterfahren."}
+]},
+{id:"hotel45",cat:"hotel",name:"Hotel · Lang",meta:"Vollprogramm: Kraftblock 1 in 3 Runden, Kraftblock 2 in 2 Runden, eigener Kardioblock mit 4 Intervallen, Ausklang.",rest:15,steps:[
+{name:"Marsch auf der Stelle",seconds:60,hint:"Locker starten, Arme mitschwingen."},
+{name:"Schulter- und Brustwirbelsäulen-Mobilisation",seconds:60,hint:"Schulterkreise, dann Oberkörper langsam rotieren."},
+{name:"Hüfte mobilisieren und Hüftbeuge locker",seconds:60,hint:"Hüftkreise, danach Bewegungsmuster ohne Anstrengung üben."},
+{name:"Seitschritt-Tippen locker",seconds:60,hint:"Leichtes seitliches Antippen, Kreislauf anwärmen."},
+{name:"Wandliegestütze",seconds:45,hint:"Kraftblock 1, Runde 1. Körperlinie halten, Schultern nicht hochziehen."},
+{name:"Isometrische Kniebeuge",seconds:45,hint:"Kraftblock 1, Runde 1. Halten, ruhig atmen, keine Pressatmung."},
+{name:"Hüftbeuge",seconds:45,hint:"Kraftblock 1, Runde 1. Gesäß aktiv, Rücken neutral."},
+{name:"Knie zum Ellbogen",seconds:45,hint:"Kraftblock 1, Runde 1. Diagonal, Bauchspannung halten."},
+{name:"Unterarmstütz an der Wand",seconds:45,hint:"Kraftblock 1, Runde 1. Körper eine Linie, gleichmäßig atmen."},
+{name:"Wandliegestütze",seconds:45,hint:"Kraftblock 1, Runde 2. Körperlinie halten, Schultern nicht hochziehen."},
+{name:"Isometrische Kniebeuge",seconds:45,hint:"Kraftblock 1, Runde 2. Halten, ruhig atmen, keine Pressatmung."},
+{name:"Hüftbeuge",seconds:45,hint:"Kraftblock 1, Runde 2. Gesäß aktiv, Rücken neutral."},
+{name:"Knie zum Ellbogen",seconds:45,hint:"Kraftblock 1, Runde 2. Diagonal, Bauchspannung halten."},
+{name:"Unterarmstütz an der Wand",seconds:45,hint:"Kraftblock 1, Runde 2. Körper eine Linie, gleichmäßig atmen."},
+{name:"Wandliegestütze",seconds:45,hint:"Kraftblock 1, Runde 3. Körperlinie halten, Schultern nicht hochziehen."},
+{name:"Isometrische Kniebeuge",seconds:45,hint:"Kraftblock 1, Runde 3. Halten, ruhig atmen, keine Pressatmung."},
+{name:"Hüftbeuge",seconds:45,hint:"Kraftblock 1, Runde 3. Gesäß aktiv, Rücken neutral."},
+{name:"Knie zum Ellbogen",seconds:45,hint:"Kraftblock 1, Runde 3. Diagonal, Bauchspannung halten."},
+{name:"Unterarmstütz an der Wand",seconds:45,hint:"Kraftblock 1, Runde 3. Körper eine Linie, gleichmäßig atmen."},
+{name:"Wandliegestütz halten",seconds:45,hint:"Kraftblock 2, Runde 1. Untere Position halten, Ellbogen nah am Körper."},
+{name:"Langsame halbe Kniebeuge",seconds:45,hint:"Kraftblock 2, Runde 1. 3 Sekunden runter, ruhig wieder hoch."},
+{name:"Schritt zurück",seconds:45,hint:"Kraftblock 2, Runde 1. Kleiner Schritt zurück, leise aufsetzen, Seiten wechseln."},
+{name:"Schulterblatt-Zug",seconds:45,hint:"Kraftblock 2, Runde 1. Arme wie beim Rudern zurückführen, Schulterblätter nach hinten und unten."},
+{name:"Rumpfrotation im Stand",seconds:45,hint:"Kraftblock 2, Runde 1. Becken ruhig, Oberkörper kontrolliert drehen, Bauch bleibt fest."},
+{name:"Wandliegestütz halten",seconds:45,hint:"Kraftblock 2, Runde 2. Untere Position halten, Ellbogen nah am Körper."},
+{name:"Langsame halbe Kniebeuge",seconds:45,hint:"Kraftblock 2, Runde 2. 3 Sekunden runter, ruhig wieder hoch."},
+{name:"Schritt zurück",seconds:45,hint:"Kraftblock 2, Runde 2. Kleiner Schritt zurück, leise aufsetzen, Seiten wechseln."},
+{name:"Schulterblatt-Zug",seconds:45,hint:"Kraftblock 2, Runde 2. Arme wie beim Rudern zurückführen, Schulterblätter nach hinten und unten."},
+{name:"Rumpfrotation im Stand",seconds:45,hint:"Kraftblock 2, Runde 2. Becken ruhig, Oberkörper kontrolliert drehen, Bauch bleibt fest."},
+{name:"Kardio 1: Zügiges Marschieren mit Armeinsatz",seconds:60,hint:"Tempo 7 von 10. Atmung deutlich, Sprechen wird kurz."},
+{name:"Aktive Erholung: locker gehen",seconds:45,hint:"Tempo 4 von 10, Atmung beruhigen. Nicht stehen bleiben."},
+{name:"Kardio 2: Knieheben gelenkschonend",seconds:60,hint:"Knie zügig heben, kein Springen, Arme gegengleich."},
+{name:"Aktive Erholung: locker gehen",seconds:45,hint:"Tempo 4 von 10, Atmung beruhigen. Nicht stehen bleiben."},
+{name:"Kardio 3: Schattenboxen im Stand",seconds:60,hint:"Gerade Schläge im Wechsel, Beine leicht federn, leise bleiben."},
+{name:"Aktive Erholung: locker gehen",seconds:45,hint:"Tempo 4 von 10, Atmung beruhigen. Nicht stehen bleiben."},
+{name:"Kardio 4: Seitschritt-Tippen zügig",seconds:60,hint:"Seitlich antippen, Tempo hoch, Aufsetzen bleibt leise."},
+{name:"Aktive Erholung: locker gehen",seconds:45,hint:"Tempo 4 von 10, Atmung beruhigen. Nicht stehen bleiben."},
+{name:"Wadenpumpe",seconds:120,hint:"Fersen langsam heben und senken. Ruhig, gleichmäßig, ohne Schwung."},
+{name:"Wirbelsäulenmobilisation",seconds:60,hint:"Rund machen, aufrichten, leicht strecken."},
+{name:"Schulter und Nacken lockern",seconds:45,hint:"Schultern hochziehen und fallen lassen, Kopf langsam bewegen."},
+{name:"Ruhiger Stand und Atmung",seconds:90,hint:"4 Sekunden ein, 6 bis 8 Sekunden aus."}
+]},
+{id:"cardio10",cat:"kardio",name:"Kardio · Kurz",meta:"4 Intervalle 45/45 Sekunden, gelenkschonend und leise. Ohne Geräte, ohne Boden.",rest:0,steps:[
+{name:"Aufwärmen: lockeres Gehen auf der Stelle",seconds:90,hint:"Tempo 4 von 10. Arme mitnehmen, Gelenke warm werden lassen."},
+{name:"Intervall 1: Marsch zügig mit Armeinsatz",seconds:45,hint:"Tempo 7 von 10. Arme über Schulterhöhe, Rumpf bleibt aufrecht."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Intervall 2: Seitschritt-Tippen schnell",seconds:45,hint:"Seitlich antippen, hohes Tempo, leises Aufsetzen."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Intervall 3: Knieheben gelenkschonend",seconds:45,hint:"Knie zügig heben, kein Springen, Bauch fest."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Intervall 4: Schattenboxen",seconds:45,hint:"Gerade Schläge im Wechsel, Beine federn leicht mit."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Ausklang: langsam gehen",seconds:90,hint:"Tempo runter, Atmung vertiefen."},
+{name:"Wadenpumpe",seconds:60,hint:"Knie leicht gebeugt, Fersen langsam heben und senken."}
+]},
+{id:"cardio20",cat:"kardio",name:"Kardio · Mittel",meta:"6 lange Intervalle 60/60, danach 4 kurze Spitzen 30/30 Sekunden.",rest:0,steps:[
+{name:"Aufwärmen: lockeres Gehen",seconds:60,hint:"Tempo 3 bis 4 von 10, ruhig einsteigen."},
+{name:"Mobilisation Schulter und Hüfte",seconds:60,hint:"Schulterkreise, Hüftkreise, Oberkörper leicht rotieren."},
+{name:"Marsch zügig mit Armeinsatz",seconds:60,hint:"Tempo 6 bis 7 von 10. Gleichmäßig, Sprechtest gerade noch bestanden."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Seitschritt-Tippen seitlich",seconds:60,hint:"Rhythmisch, ohne Sprung, Aufsetzen leise."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Knieheben gelenkschonend",seconds:60,hint:"Knie auf Hüfthöhe, Rumpf stabil."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Schattenboxen im Stand",seconds:60,hint:"Jab und Cross im Wechsel, Schultern locker."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Seitschritt mit Nachstellen",seconds:60,hint:"Schritt zur Seite, gegenüberliegender Fuß tippt nach, Knie weich."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Wandbergsteiger",seconds:60,hint:"Hände an der Wand, Knie im Wechsel zügig anziehen. Tempo bestimmst du."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Kurzintervall: Fersenheben schnell",seconds:30,hint:"Tempo 8 von 10, hohe Frequenz, kurze Belastung."},
+{name:"Locker gehen",seconds:30,hint:"Tempo 3 von 10. Kurz durchatmen, in Bewegung bleiben."},
+{name:"Kurzintervall: Schattenboxen schnell",seconds:30,hint:"Kurz und knackig, Deckung oben."},
+{name:"Locker gehen",seconds:30,hint:"Tempo 3 von 10. Kurz durchatmen, in Bewegung bleiben."},
+{name:"Kurzintervall: Knieheben zügig",seconds:30,hint:"Frequenz hoch, weiterhin ohne Sprung."},
+{name:"Locker gehen",seconds:30,hint:"Tempo 3 von 10. Kurz durchatmen, in Bewegung bleiben."},
+{name:"Kurzintervall: Marsch sehr zügig",seconds:30,hint:"Letzte Belastung, noch einmal Tempo."},
+{name:"Locker gehen",seconds:30,hint:"Tempo 3 von 10. Kurz durchatmen, in Bewegung bleiben."},
+{name:"Ausklang: langsam gehen",seconds:60,hint:"Puls bewusst senken."},
+{name:"Wadenpumpe",seconds:60,hint:"Ruhig und gleichmäßig, Knie leicht gebeugt."}
+]},
+{id:"cardio30",cat:"kardio",name:"Kardio · Lang",meta:"Zwei Intervallblöcke: 6 mal 60/60, dann 6 mal 45/45 Sekunden, ausführlicher Ausklang.",rest:0,steps:[
+{name:"Aufwärmen: lockeres Gehen",seconds:60,hint:"Tempo 3 von 10, ruhig einsteigen."},
+{name:"Mobilisation Schulter und Hüfte",seconds:60,hint:"Große, langsame Bewegungen, nichts erzwingen."},
+{name:"Zügiges Gehen auf der Stelle",seconds:60,hint:"Tempo 5 von 10, Kreislauf hochfahren."},
+{name:"Marsch zügig mit Armeinsatz",seconds:60,hint:"Tempo 6 bis 7 von 10. Gleichmäßig, Sprechtest gerade noch bestanden."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Seitschritt-Tippen seitlich",seconds:60,hint:"Rhythmisch, ohne Sprung, Aufsetzen leise."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Knieheben gelenkschonend",seconds:60,hint:"Knie auf Hüfthöhe, Rumpf stabil."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Schattenboxen im Stand",seconds:60,hint:"Jab und Cross im Wechsel, Schultern locker."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Seitschritt mit Nachstellen",seconds:60,hint:"Schritt zur Seite, gegenüberliegender Fuß tippt nach, Knie weich."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Wandbergsteiger",seconds:60,hint:"Hände an der Wand, Knie im Wechsel zügig anziehen. Tempo bestimmst du."},
+{name:"Locker gehen",seconds:60,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Block 2: Marsch zügig",seconds:45,hint:"Tempo 7 von 10, Armeinsatz groß."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Block 2: Knieheben",seconds:45,hint:"Frequenz etwas höher als in Block 1."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Block 2: Seitschritt-Tippen schnell",seconds:45,hint:"Leise bleiben, Tempo halten."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Block 2: Schattenboxen",seconds:45,hint:"Schulterblätter locker, Schläge zügig."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Block 2: Seitschritt mit Nachstellen",seconds:45,hint:"Knie weich, Bewegung aus der Hüfte."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Block 2: Wandbergsteiger",seconds:45,hint:"Letzter harter Satz, Tempo selbst dosieren."},
+{name:"Locker gehen",seconds:45,hint:"Tempo 4 von 10. Locker weitergehen, Atmung beruhigen."},
+{name:"Ausklang: locker gehen",seconds:120,hint:"Tempo langsam zurücknehmen, tief atmen."},
+{name:"Wadenpumpe",seconds:120,hint:"Knie leicht gebeugt, Fersen langsam heben und senken."},
+{name:"Wirbelsäulenmobilisation",seconds:60,hint:"Rund machen, aufrichten, leicht strecken."},
+{name:"Ruhiger Stand und Atmung",seconds:60,hint:"4 Sekunden ein, 6 bis 8 Sekunden aus."}
+]}
+];
+
+const CATLABEL={kraft:'Kraft',alltag:'Alltag',hotel:'Hotel',kardio:'Kardio'};
+/* ---------- Übungslexikon: erste passende Regel gewinnt ---------- */
+const EXPL=[
+[/wandliegestütz halten/i,"Wandliegestütz halten","Wie der Wandliegestütz, aber du bleibst in der unteren Position stehen. Körperspannung von der Ferse bis zum Kopf halten, Schulterblätter leicht zusammen, ruhig weiteratmen. Trainiert die Haltearbeit von Brust und Schulter statt der Bewegung."],
+[/wandliegestütz/i,"Wandliegestütz","Hände etwa schulterbreit an die Wand, Füße so weit zurück, dass der Körper eine gerade Linie bildet. Brust kontrolliert zur Wand senken, die Ellbogen zeigen dabei schräg nach hinten, nicht nach außen. Je weiter die Füße von der Wand weg stehen, desto schwerer wird es: das ist deine Dosierung."],
+[/unterarmstütz an der wand/i,"Unterarmstütz an der Wand","Unterarme an die Wand, Ellbogen unter den Schultern, Füße ein Stück zurück. Bauch und Gesäß anspannen, sodass Becken und Brustkorb eine Linie bilden. Die schonende Variante des Unterarmstütz, ohne Bodenkontakt und damit hotelzimmertauglich."],
+[/plank|unterarmstütz/i,"Plank (Unterarmstütz)","Unterarme am Boden, Ellbogen unter den Schultern, Körper gerade, Blick nach unten. Gesäß und Bauch fest, kein Durchhängen im unteren Rücken. Lieber kürzer und sauber als lang und mit Hohlkreuz."],
+[/wadenpumpe|soleus/i,"Wadenpumpe","Im Sitzen oder Stehen die Knie leicht beugen und die Fersen langsam heben und senken, etwa eine Sekunde pro Richtung. Der Schollenmuskel arbeitet sehr ausdauernd und verbraucht dabei Glukose direkt aus dem Blut, weshalb die Übung nach dem Essen besonders sinnvoll ist. Es soll nicht anstrengend sein, sondern lange durchhaltbar."],
+[/isometrische kniebeuge|wandsitz/i,"Isometrische Kniebeuge","Mit dem Rücken an die Wand, Füße etwa 40 cm davor, dann in eine halbe Sitzposition rutschen. Knie über dem Mittelfuß, Gewicht auf der ganzen Fußsohle, ruhig weiteratmen und nicht pressen. Höhere Position ist leichter, tiefere schwerer."],
+[/^kniebeugen|kniebeugen satz/i,"Kniebeuge","Füße etwa schulterbreit, Zehen leicht nach außen. Gesäß nach hinten und unten, Knie folgen der Fußrichtung über dem Mittelfuß, Brust bleibt aufgerichtet, Fersen am Boden. So tief, wie der Rücken neutral bleibt – meist etwa bis zur Waagerechten der Oberschenkel. Mit Kurzhanteln an den Seiten oder vor der Brust dosierst du die Last."],
+[/halbe kniebeuge/i,"Langsame halbe Kniebeuge","Nur bis zur halben Tiefe absenken, dafür betont langsam: etwa 3 Sekunden abwärts, ruhig wieder hoch. Die langsame Ausführung ersetzt hier das fehlende Zusatzgewicht."],
+[/hüftbeuger dehnen/i,"Hüftbeuger dehnen","Schrittstellung, das hintere Bein gestreckt. Das Becken leicht aufrichten und nach vorn schieben, bis vorn an der Hüfte des hinteren Beins ein Zug entsteht. Wichtiger als die Schrittlänge ist das aufgerichtete Becken – ohne das passiert nichts. Der Hüftbeuger verkürzt beim Sitzen und zieht das Becken nach vorn, was den unteren Rücken belastet."],
+[/hüftbeuge/i,"Hüftbeuge","Füße hüftbreit, Knie leicht gebeugt. Das Gesäß weit nach hinten schieben und den Oberkörper mit langem Rücken nach vorn neigen, bis du einen Zug an der Oberschenkelrückseite spürst. Die Bewegung kommt aus der Hüfte, nicht aus dem unteren Rücken: dasselbe Muster, das du beim Heben im Alltag brauchst."],
+[/knie zum ellbogen/i,"Knie zum Ellbogen","Im Stand abwechselnd ein Knie heben und den gegenüberliegenden Ellbogen dazu führen. Die Drehung kommt aus dem Rumpf, nicht nur aus den Armen. Kombiniert leichte Kreislaufarbeit mit der schrägen Bauchmuskulatur."],
+[/beckenheben/i,"Beckenheben","Rückenlage, Füße aufgestellt, Becken heben, bis Oberschenkel und Oberkörper eine Linie bilden. Oben ein bis zwei Sekunden halten und das Gesäß bewusst anspannen. Die Bewegung endet, wo die Hüfte gestreckt ist, nicht im Hohlkreuz."],
+[/wechsel kardio/i,"Übergang zum Kardioblock","Kurze Pause zwischen Kraft- und Kardioteil: Atmung normalisieren, etwas trinken, gegebenenfalls leichte Handgelenksmanschetten anlegen. Manschetten mit 0,5 bis 1 kg pro Seite reichen völlig – sie erhöhen den Energieverbrauch beim Armschwung spürbar, ohne die Schulter zu belasten. Schwerer sollte es nicht sein, weil sonst der Gang unrund wird und Ellbogen und Schulter unnötig Last bekommen."],
+[/rudern/i,"Rudern","Handgriffe in der mittleren Ebene auf Schulterhöhe – dieselbe Position wie bei Bankdrücken und Butterfly. Es wird nichts umgebaut – du setzt dich nur andersherum hin, sodass die Seile von vorn kommen. Zuerst die Schulterblätter zusammen und nach unten ziehen, dann erst die Arme beugen; die Ellbogen laufen etwas außen. Oberkörper bleibt aufrecht, kein Zurücklehnen. Trifft in dieser Höhe vor allem oberen Rücken und hintere Schulter – das direkte Gegengewicht zur Sitzhaltung. Weniger Gewicht wählen als beim Latziehen."],
+[/kreuzheben/i,"Kurzhantel-Kreuzheben","Das Hüftbeuge-Muster mit Gewicht: Gesäß weit nach hinten, Rücken lang, die Hanteln bleiben dicht am Bein. Nur so tief, wie der Rücken neutral bleibt – meist etwa bis Kniemitte. Nach oben kommt die Bewegung aus dem Gesäß, nicht aus dem unteren Rücken. Kein Zurücklehnen am Ende."],
+[/schulterdrücken/i,"Schulterdrücken","Kurzhanteln auf Schulterhöhe, dann über Kopf drücken, bis die Arme fast gestreckt sind. Rippen unten lassen und den Bauch leicht anspannen, damit kein Hohlkreuz entsteht. Im Sitzen mit Lehne ist der Rücken besser gesichert als im Stehen."],
+[/ausfallschritt/i,"Ausfallschritt","Ein großer Schritt nach vorn oder hinten, das hintere Knie senkt sich kontrolliert Richtung Boden, der Oberkörper bleibt aufrecht. Das vordere Knie folgt der Fußrichtung. Trainiert jede Seite einzeln und deckt damit Seitenunterschiede auf, die bei der Kniebeuge verborgen bleiben."],
+[/seitstütz an der wand/i,"Seitstütz an der Wand","Seitlich zur Wand stellen, den Unterarm etwa auf Schulterhöhe anlegen und die Füße ein Stück von der Wand wegsetzen. Dann die Hüfte bewusst zur Wand drücken, sodass Schulter, Hüfte und Fuß eine Linie bilden. Je weiter die Füße weg stehen, desto schwerer. Trainiert die seitliche Rumpfmuskulatur wie der Seitstütz am Boden – nur ohne Matte und ohne Bodenkontakt."],
+[/hüftstreckung im stand/i,"Hüftstreckung im Stand","An der Wand abstützen, ein Bein gestreckt nach hinten führen und oben kurz halten, das Gesäß dabei bewusst anspannen. Die Bewegung ist klein: Sobald das Becken kippt oder ein Hohlkreuz entsteht, ist sie zu weit. Ersetzt das Beckenheben, wenn kein Platz am Boden ist."],
+[/seitstütz/i,"Seitstütz","Auf dem Unterarm liegend, Ellbogen unter der Schulter, Becken anheben, bis Schulter, Hüfte und Knie eine Linie bilden. Auf den Knien ist es leichter, auf den Füßen schwerer. Trainiert die seitliche Rumpfmuskulatur, die bei Bauchübungen sonst zu kurz kommt."],
+[/latziehen/i,"Latziehen","Am Bioforce mit weitem Griff zur Brust ziehen, die Ellbogen nach unten und hinten führen. Zuerst die Schulterblätter nach hinten und unten ziehen, dann erst die Arme arbeiten lassen. Nacken lang, kein Schwung aus dem Rumpf."],
+[/bankdrücken|butterfly|^brust satz|brust satz/i,"Bankdrücken oder Butterfly","Wähle eine der beiden Übungen, nicht beide. Kontrolliert absenken, die Schultern bleiben unten und hinten und werden nicht zu den Ohren gezogen. Am Umkehrpunkt nicht ablegen, sondern die Spannung halten."],
+[/bizepscurl/i,"Bizepscurls","Ellbogen bleiben am Körper und ruhig, nur der Unterarm bewegt sich. Schwingt der Oberkörper mit, ist das Gewicht zu hoch. Das Ablassen langsamer ausführen als das Anheben."],
+[/crunch|beinheben/i,"Bauchbeuge oder Beinheben","Nur eine der beiden Übungen wählen. Crunch: Schulterblätter wenige Zentimeter vom Boden lösen, Halswirbelsäule lang, nicht am Kopf ziehen. Beinheben: die Lendenwirbelsäule bleibt am Boden, sonst die Beine weniger weit absenken."],
+[/schulterblatt-zug/i,"Schulterblatt-Zug","Arme wie beim Rudern nach hinten führen und die Schulterblätter zusammen und nach unten ziehen, kurz halten, lösen. Ohne Widerstand ist das vor allem Haltungsarbeit gegen die Schreibtischposition."],
+[/tisch-zug/i,"Isometrischer Tisch-Zug","Im Sitzen unter die Tischplatte greifen und nach oben ziehen, als wolltest du den Tisch anheben. Schultern tief lassen, Spannung aufbauen und halten, dabei normal weiteratmen. Von außen praktisch unsichtbar."],
+[/brust-press/i,"Isometrischer Brust-Press","Handflächen vor der Brust gegeneinander drücken, Ellbogen auf Schulterhöhe. Spannung aufbauen und halten, gleichmäßig weiteratmen, keine Pressatmung."],
+[/core-halt/i,"Sitzender Core-Halt","Aufrecht sitzen ohne anzulehnen, Becken leicht aufgerichtet, Bauch fest. Wer mehr will, hebt die Füße wenige Zentimeter vom Boden ab."],
+[/sitzendes marschieren/i,"Sitzendes Marschieren","Aufrecht sitzen und die Knie abwechselnd zügig anheben, die Arme dürfen mitgehen. Bringt Kreislauf und Hüftbeuger in Bewegung, ohne dass du aufstehen musst."],
+[/seitschritt/i,"Seitschritt-Tippen","Ein Schritt zur Seite, der andere Fuß tippt nach, dann zurück. Rhythmisch, Knie weich, Aufsetzen bewusst leise. Beim seitlichen Seitschritt mit Nachstellen geht der Schritt weiter zur Seite, die Hüfte arbeitet mehr."],
+[/schritt zurück/i,"Schritt zurück","Ein kleiner Schritt nach hinten, leise aufsetzen, das hintere Knie leicht beugen, wieder heranziehen. Seiten abwechseln. Die entschärfte Ausfallschritt-Variante: gut für Beine und Gleichgewicht, ohne Lärm nach unten."],
+[/wandbergsteiger/i,"Wandbergsteiger","Hände an der Wand auf Schulterhöhe, Körper leicht schräg nach vorn, dann die Knie abwechselnd zügig anziehen. Das Bergsteiger-Muster im Stand: treibt den Puls, ohne Bodenkontakt und ohne Erschütterung."],
+[/schattenboxen/i,"Schattenboxen","Leichte Grundstellung, Fäuste vor dem Kinn, dann gerade Schläge im Wechsel. Schultern locker, Ellbogen nicht vollständig durchstrecken, Beine federn leicht mit. Tempo und Armhöhe bestimmen die Intensität."],
+[/knieheben/i,"Knieheben gelenkschonend","Knie abwechselnd auf Hüfthöhe heben, Arme gegengleich mitführen. Ein Fuß bleibt immer am Boden, es wird nicht gesprungen. Die Frequenz steuert die Belastung."],
+[/fersenheben/i,"Fersenheben schnell","Im Stand auf die Fußballen und wieder ab, mit hoher Frequenz. Kurze, intensive Belastung für Waden und Kreislauf, dabei sehr leise."],
+[/brustöffnung/i,"Brustöffnung an der Wand","Unterarm an den Türrahmen oder die Wand legen, Ellbogen etwa auf Schulterhöhe, dann das Brustbein langsam von der Wand wegdrehen. Leichter Zug vorn an Brust und Schulter, nie ein Schmerz. Gegenstück zur nach vorn gezogenen Schulterhaltung, die sich über einen Arbeitstag am Gerät oder am Schreibtisch aufbaut."],
+[/seitneigung/i,"Seitneigung im Stand","Einen Arm über den Kopf führen und den Oberkörper langsam zur Gegenseite neigen, kurz halten, Seite wechseln. Das Becken bleibt stehen und wandert nicht mit aus – sonst geht die Dehnung verloren. Betrifft die seitliche Rumpfmuskulatur und die Flanke."],
+[/oberschenkelrückseite dehnen/i,"Oberschenkelrückseite dehnen","Eine Ferse vor sich aufsetzen, Fußspitze anziehen, dann das Gesäß nach hinten schieben – das gleiche Muster wie bei der Hüftbeuge, nur ohne Last. Der Rücken bleibt lang, die Bewegung kommt aus der Hüfte. Leichter Zug reicht, es muss nicht ziehen bis zur Schmerzgrenze."],
+[/wadendehnung/i,"Wadendehnung an der Wand","Hände an die Wand, ein Bein nach hinten, Ferse zum Boden, das hintere Knie gestreckt. Etwa 15 Sekunden je Seite, leichter Zug, kein Schmerz."],
+[/rumpfrotation/i,"Rumpfrotation im Stand","Aufrecht stehen, das Becken bleibt ruhig, der Oberkörper dreht langsam nach links und rechts, der Blick geht mit. Keine schwungvollen Bewegungen, die Endposition wird nicht erzwungen."],
+[/schulter.*brustwirbel|brustwirbel/i,"Schulter- und BWS-Mobilisation","Große, langsame Schulterkreise, danach den Oberkörper aus der Brustwirbelsäule nach links und rechts drehen. Zielt auf den Bereich, der beim Sitzen am steifsten wird."],
+[/wirbelsäule aufwecken/i,"Wirbelsäule aufwecken","Im Stand die Wirbelsäule langsam einrollen, Wirbel für Wirbel wieder aufrichten, zum Schluss leicht in die Streckung. Zwei ruhige Durchgänge genügen. Nach der Nacht sind die Bandscheiben stärker gequollen als tagsüber – deshalb morgens ohne Schwung und ohne Federn arbeiten, nur langsam und im schmerzfreien Bereich."],
+[/einbeinstand/i,"Einbeinstand","Auf einem Bein stehen, das andere leicht anheben, etwa 20 bis 30 Sekunden je Seite. Schwerer wird es mit geschlossenen Augen oder wenn du den Kopf langsam drehst – dann fällt die visuelle Kontrolle weg und das Gleichgewichtssystem muss allein arbeiten. Gleichgewicht lässt ab der Lebensmitte am schnellsten nach und lässt sich mit wenigen Sekunden täglich gut erhalten."],
+[/wirbelsäulenmobilisation/i,"Wirbelsäulenmobilisation","Im Stand die Wirbelsäule langsam rund machen, wieder aufrichten und leicht strecken, Wirbel für Wirbel. Nur im schmerzfreien Bereich, ohne Federn."],
+[/marsch|marschieren|gehen auf der stelle|zügiges gehen/i,"Marschieren auf der Stelle","Auf der Stelle gehen und die Arme aktiv mitschwingen. Über Schrittfrequenz und Armeinsatz steuerst du die Intensität: großer Armeinsatz und hohes Tempo treiben den Puls, kleine Schritte halten ihn niedrig. Leise aufsetzen, nicht stampfen."],
+[/aktive erholung|locker gehen|lockeres gehen/i,"Aktive Erholung","Weitergehen statt stehen bleiben, locker auf der Stelle, Tempo etwa 4 von 10. Der Kreislauf arbeitet weiter, der Puls fällt aber genug ab, damit das nächste Intervall wieder hart sein kann."],
+[/ausklang|cool-?down|langsam gehen/i,"Ausklang","Das Tempo bewusst zurücknehmen und den Puls über ein bis zwei Minuten absinken lassen, statt abrupt zu stoppen."],
+[/schulter.*(nacken|kreis)|nacken/i,"Schulter und Nacken lösen","Große, langsame Schulterkreise, Schultern hochziehen und fallen lassen, den Kopf ruhig zu beiden Seiten neigen. Nicht ziehen und nicht federn."],
+[/mobilisation schulter und hüfte|hüfte mobilisieren|hüftkreis/i,"Mobilisation Schulter und Hüfte","Schulterkreise, danach Hüftkreise, jeweils groß und langsam. Es geht um Durchblutung und Gelenkbeweglichkeit vor der Belastung, nicht um Dehnung."],
+[/atmung/i,"Ruhiger Stand und Atmung","Ruhig stehen oder sitzen: 4 Sekunden einatmen, 6 bis 8 Sekunden ausatmen. Der verlängerte Ausatem senkt Puls und Anspannung, deshalb steht er am Ende der Einheit."],
+[/^wechsel|wechsel/i,"Wechsel","Kurze Umbauzeit zwischen zwei Übungen: Position wechseln, kurz durchatmen. Wenn du schneller bereit bist, tippe Weiter."],
+[/^pause/i,"Satzpause","Bewusste Pause zwischen zwei Sätzen. Atmung normalisieren, Widerstand oder Gewicht für den nächsten Satz vorbereiten. Bist du früher bereit, tippe Weiter."],
+[/aufwärmen|warm-?up|aktivierung/i,"Aufwärmen","Lockeres Aufwärmen: Kreislauf hochfahren und die beteiligten Gelenke durchbewegen, bevor die eigentliche Belastung beginnt."],
+];
+function explain(name){for(const [re,title,text] of EXPL){if(re.test(name))return{title,text}}return null}
+
+const stripCat=n=>{const i=n.indexOf('\u00b7');return i>0&&Object.values(CATLABEL).includes(n.slice(0,i).trim())?n.slice(i+1).trim():n};
+const $=id=>document.getElementById(id);
+const body=document.body,
+      tabsEl=$('tabs'),cardsEl=$('cards'),list=$('exerciseList'),stepCount=$('stepCount'),
+      phase=$('phase'),phaseText=$('phaseText'),exerciseEl=$('exercise'),hintEl=$('hint'),clock=$('clock'),
+      progress=$('progress'),stepInfo=$('stepInfo'),totalInfo=$('totalInfo'),nextUp=$('nextUp'),
+      goBtn=$('goBtn'),goTime=$('goTime'),exitBtn=$('exitBtn'),startBtn=$('startBtn'),prevBtn=$('prevBtn'),
+      nextBtn=$('nextBtn'),resetBtn=$('resetBtn'),runScreen=$('runScreen'),
+      soundToggle=$('soundToggle'),vibrateToggle=$('vibrateToggle'),restToggle=$('restToggle'),
+      restWrap=$('restWrap'),vibrateWrap=$('vibrateWrap'),
+      infoBtn=$('infoBtn'),sheet=$('sheet'),sheetTitle=$('sheetTitle'),sheetText=$('sheetText'),sheetClose=$('sheetClose'),
+      speakToggle=$('speakToggle'),speakWrap=$('speakWrap'),nowClock=$('nowClock'),summaryText=$('summaryText'),
+      optsEl=document.querySelector('.opts'),detailTitle=$('detailTitle'),detailMeta=$('detailMeta'),
+      detailTime=$('detailTime'),detailFoot=$('detailFoot'),backBtn=$('backBtn'),
+      noteBox=document.querySelector('.note'),
+      reader=$('reader'),readerKicker=$('readerKicker'),readerPos=$('readerPos'),readerTitle=$('readerTitle'),
+      readerText=$('readerText'),readerBody=$('readerBody'),readerPrev=$('readerPrev'),readerNext=$('readerNext'),
+      readerClose=$('readerClose');
+
+let workout=workouts[0],cat=workout.cat,sequence=[],items=[],idx=0,remaining=0,segmentTotal=0,endAt=0,
+    running=false,finished=false,interval=null,audioCtx=null,wakeLock=null;
+
+const PREFS='trainingTimerPrefs';
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const mmss=s=>{s=Math.max(0,Math.round(s));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+const inRun=()=>body.classList.contains('run');
+const isNotes=w=>Array.isArray(w.notes)&&w.notes.length>0;
+const durationOf=w=>isNotes(w)?0:w.steps.reduce((a,s)=>a+s.seconds,0)+(restToggle.checked?w.rest*(w.steps.length-1):0);
+
+/* ---------- Einstellungen ---------- */
+function loadPrefs(){try{const p=JSON.parse(store.get(PREFS)||'{}');
+  if('sound'in p)soundToggle.checked=p.sound;if('vibrate'in p)vibrateToggle.checked=p.vibrate;
+  if('rest'in p)restToggle.checked=p.rest;
+  if('speak'in p)speakToggle.checked=p.speak}catch(e){}}
+function savePrefs(){store.set(PREFS,JSON.stringify({sound:soundToggle.checked,vibrate:vibrateToggle.checked,
+  rest:restToggle.checked,speak:speakToggle.checked}))}
+
+/* ---------- Auswahl rendern ---------- */
+function renderTabs(){const cats=[...new Set(workouts.map(w=>w.cat))];
+  tabsEl.innerHTML=cats.map(c=>`<button class="tab" role="tab" data-cat="${c}" aria-selected="${c===cat}">${CATLABEL[c]||c}</button>`).join('')}
+function renderCards(){
+  const group=workouts.filter(w=>w.cat===cat);
+  const max=Math.max(1,...group.map(durationOf));
+  cardsEl.innerHTML=group.map(w=>`<button class="wcard" data-id="${w.id}" aria-pressed="${w.id===workout.id}">
+    <span class="wtop"><span class="wname">${stripCat(w.name)}</span><span class="wtime num">${isNotes(w)?w.notes.length+' Ideen':mmss(durationOf(w))}</span></span>
+    <span class="wmeta">${w.meta}</span>
+    ${isNotes(w)?'':`<span class="wbar"><i style="width:${Math.round(durationOf(w)/max*100)}%"></i></span>`}</button>`).join('');
+  tabsEl.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t.dataset.cat===cat))}
+function buildList(){
+  if(isNotes(workout)){
+    list.innerHTML=workout.notes.map((n,i)=>`<li data-n="${i}">
+      <div class="row"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${n.t}</span>
+        <span class="d"></span><span class="chev">&#9654;</span></div>
+      </li>`).join('');
+    items=Array.from(list.children);stepCount.textContent=workout.notes.length;
+    summaryText.textContent='Ideen ansehen';return}
+  summaryText.textContent='Übungen ansehen';
+  list.innerHTML=workout.steps.map((s,i)=>{
+  const e=explain(s.name);
+  return `<li data-i="${i}">
+    <div class="row"><span class="n">${String(i+1).padStart(2,'0')}</span><span>${s.name}</span>
+      <span class="d">${mmss(s.seconds)}</span><span class="chev">&#9654;</span></div>
+    <div class="exp">${e?`<p><b>${e.title}.</b> ${e.text}</p>`:'<p class="none">Für diesen Schritt gibt es keine eigene Erklärung.</p>'}
+      <button class="start" data-start="${i}">Ab hier starten</button></div></li>`}).join('');
+  items=Array.from(list.children);stepCount.textContent=workout.steps.length}
+function highlightList(){const act=finished?-1:(sequence[idx]?sequence[idx].originalIndex:-1);
+  items.forEach((li,i)=>{const on=i===act;
+    if(on!==li.classList.contains('active')){li.classList.toggle('active',on);
+      if(on&&!inRun()&&li.scrollIntoView)li.scrollIntoView({block:'nearest'})}})}
+
+/* ---------- Ablauf ---------- */
+function buildSequence(){sequence=[];
+  if(workout.steps.length)sequence.push({name:'Bereitmachen',seconds:5,
+    hint:'Position einnehmen. Gleich geht es los mit: '+workout.steps[0].name,kind:'prep',originalIndex:0});
+  workout.steps.forEach((st,i)=>{const isPause=/pause|wechsel/i.test(st.name);
+  sequence.push({...st,kind:isPause?'rest':'work',originalIndex:i});
+  if(restToggle.checked&&workout.rest>0&&i<workout.steps.length-1){
+    sequence.push({name:'Wechsel',seconds:workout.rest,hint:'Zur nächsten Übung wechseln. Ruhig atmen.',kind:'rest',originalIndex:i})}})}
+const totalSeconds=()=>sequence.reduce((a,s)=>a+(s.kind==='prep'?0:s.seconds),0);
+function remainingSeconds(){if(finished)return 0;
+  let t=sequence[idx]&&sequence[idx].kind==='prep'?0:Math.max(0,remaining);
+  for(let i=idx+1;i<sequence.length;i++)if(sequence[i].kind!=='prep')t+=sequence[i].seconds;
+  return t}
+
+function render(){
+  if(isNotes(workout)){highlightList();return}
+  goTime.textContent=mmss(totalSeconds());detailTime.textContent=mmss(totalSeconds());
+  if(finished){
+    phase.className='phase';runScreen.className='';clock.classList.remove('urgent');
+    phaseText.textContent='Fertig';exerciseEl.textContent='Geschafft';hintEl.textContent='Workout beendet.';
+    clock.textContent='00:00';progress.style.width='100%';
+    stepInfo.textContent=`${workout.steps.length}/${workout.steps.length}`;
+    nextUp.textContent='Danach: –';totalInfo.innerHTML='Rest <b>00:00</b>';
+    startBtn.textContent='Start';goBtn.firstChild.textContent='Training starten ';
+    infoBtn.hidden=true;closeSheet();highlightList();return}
+  const cur=sequence[idx]||{name:'–',seconds:0,hint:'',kind:'work',originalIndex:0};
+  const isRest=cur.kind!=='work';
+  phase.className='phase'+(isRest?' rest':'');runScreen.className=isRest?'rest':'';
+  phaseText.textContent=running?(cur.kind==='prep'?'Achtung':(isRest?'Pause':'Übung'))
+    :(remaining===segmentTotal&&idx===0?'Bereit':'Pausiert');
+  exerciseEl.textContent=cur.name;hintEl.textContent=cur.hint||'';
+  clock.textContent=mmss(Math.ceil(remaining));
+  clock.classList.toggle('urgent',running&&remaining<=3.05&&remaining>0);
+  progress.style.width=`${segmentTotal?Math.max(0,Math.min(100,(segmentTotal-remaining)/segmentTotal*100)):0}%`;
+  stepInfo.textContent=`${Math.min((cur.originalIndex??0)+1,workout.steps.length)}/${workout.steps.length}`;
+  const nxt=sequence[idx+1];
+  nextUp.textContent=nxt?`Danach: ${nxt.name}`:'Letzter Schritt';
+  totalInfo.innerHTML=`Rest <b>${mmss(remainingSeconds())}</b>`;
+  startBtn.textContent=running?'Pause':'Start';
+  goBtn.firstChild.textContent=(idx>0||remaining!==segmentTotal)?'Fortsetzen ':'Training starten ';
+  syncInfoBtn();refreshSheet();highlightList()}
+
+/* ---------- Vollbild-Leseansicht für Ideen ---------- */
+let readIdx=0;
+const inReader=()=>body.classList.contains('reading');
+function paintReader(){
+  const n=workout.notes&&workout.notes[readIdx];if(!n)return;
+  readerKicker.textContent=stripCat(workout.name);
+  readerPos.textContent=`${readIdx+1}/${workout.notes.length}`;
+  readerTitle.textContent=n.t;readerText.textContent=n.x;
+  readerPrev.disabled=readIdx<=0;readerNext.disabled=readIdx>=workout.notes.length-1;
+  readerBody.scrollTop=0;
+  requestAnimationFrame(()=>readerBody.classList.toggle('top',readerBody.scrollHeight>readerBody.clientHeight+2))}
+function openReader(i){
+  if(!isNotes(workout))return;
+  readIdx=Math.max(0,Math.min(i,workout.notes.length-1));
+  body.classList.add('reading');paintReader();enterFullscreen();keepAwake()}
+function closeReader(){body.classList.remove('reading')}
+function readerStep(d){const t=readIdx+d;
+  if(t<0||t>=workout.notes.length)return;readIdx=t;paintReader()}
+
+/* ---------- Erklärungs-Sheet ---------- */
+function currentName(){const c=sequence[idx];return finished?null:(c?c.name:null)}
+function syncInfoBtn(){const n=currentName();infoBtn.hidden=!(n&&explain(n))}
+function openSheet(){const n=currentName();if(!n)return;const e=explain(n);if(!e)return;
+  sheetTitle.textContent=e.title;sheetText.textContent=e.text;sheet.classList.add('on')}
+function closeSheet(){sheet.classList.remove('on')}
+function refreshSheet(){if(!sheet.classList.contains('on'))return;
+  const n=currentName(),e=n&&explain(n);
+  if(!e){closeSheet();return}
+  if(sheetTitle.textContent!==e.title){sheetTitle.textContent=e.title;sheetText.textContent=e.text}}
+
+/* ---------- Ton ---------- */
+function unlockAudio(){try{audioCtx=audioCtx||new(window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume()}catch(e){}}
+function beep(freq=880,dur=.08){if(!soundToggle.checked)return;try{unlockAudio();if(!audioCtx)return;
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.frequency.value=freq;o.type='sine';
+  g.gain.setValueAtTime(.0001,audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(.12,audioCtx.currentTime+.01);
+  g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+dur);
+  o.connect(g);g.connect(audioCtx.destination);o.start();o.stop(audioCtx.currentTime+dur+.02)}catch(e){}}
+function buzz(ms=80){if(vibrateToggle.checked&&navigator.vibrate)navigator.vibrate(ms)}
+
+/* ---------- Sprachansage ---------- */
+const canSpeak=()=>'speechSynthesis'in window;
+let voiceDE=null,preFor=-1;
+function pickVoice(){if(!canSpeak())return;
+  const v=speechSynthesis.getVoices()||[];
+  voiceDE=v.find(x=>/^de[-_]DE/i.test(x.lang))||v.find(x=>/^de/i.test(x.lang))||null}
+if(canSpeak()){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+
+/* Namen vorlesbar machen: Prefixe und Abkürzungen raus */
+function speakable(name){
+  let n=name
+    .replace(/^(Aufwärmen|Warm-?up|Aktivierung|Kardio\s*\d*|Block\s*\d+|Kraftblock\s*\d+|Intervall\s*\d*|Kurzintervall)\s*[:·]\s*/i,'')
+    .replace(/\s*\(.*?\)\s*/g,' ')
+    .replace(/\bgelenkschonend\b/gi,'')
+    .replace(/\bSatz\s*(\d)/i,'Satz $1')
+    .replace(/\bWdh\.?/gi,'Wiederholungen')
+    .replace(/\bBWS\b/g,'Brustwirbelsäule')
+    .replace(/\s*\+\s*/g,' und ')
+    .replace(/\s{2,}/g,' ').trim();
+  if(!n)n=name;
+  return n}
+function say(text){
+  if(!speakToggle.checked||!canSpeak())return;
+  try{speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='de-DE';if(voiceDE)u.voice=voiceDE;
+    u.rate=1.02;u.pitch=1;u.volume=1;
+    speechSynthesis.speak(u)}catch(e){}}
+function announce(i,pre){
+  const st=sequence[i];if(!st)return;
+  if(st.kind==='prep'){const nxt=sequence[i+1];
+    say(nxt?'Bereitmachen. '+speakable(nxt.name):'Bereitmachen');return}
+  if(st.kind==='rest'){
+    const nxt=sequence[i+1];
+    say(nxt?'Pause. Danach '+speakable(nxt.name):'Pause');return}
+  say(pre?'Gleich: '+speakable(st.name):speakable(st.name))}
+
+/* ---------- Uhrzeit ---------- */
+function paintNow(){const d=new Date();
+  nowClock.textContent=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+paintNow();setInterval(paintNow,15000);
+
+/* ---------- Timer ---------- */
+function schedule(){endAt=Date.now()+remaining*1000;clearInterval(interval);interval=setInterval(tick,200)}
+function tick(){
+  if(!running)return;
+  const left=(endAt-Date.now())/1000;
+  if(left>0){const before=Math.ceil(remaining);remaining=left;const now=Math.ceil(remaining);
+    if(now<before&&now<=3&&now>0)beep(sequence[idx]&&sequence[idx].kind==='prep'?760:660,.04);
+    if(now<=5&&preFor!==idx+1&&sequence[idx]&&sequence[idx].kind==='work'&&sequence[idx+1]
+       &&sequence[idx+1].kind==='work'&&segmentTotal>=20){preFor=idx+1;announce(idx+1,true)}
+    render();return}
+  remaining=0;advance()}
+function advance(){
+  if(idx>=sequence.length-1){finish();return}
+  idx++;segmentTotal=sequence[idx].seconds;endAt+=segmentTotal*1000;
+  remaining=Math.max(0,(endAt-Date.now())/1000);
+  if(remaining<=0){advance();return}
+  beep(sequence[idx].kind!=='work'?520:880);buzz(60);
+  if(preFor!==idx)announce(idx,false);
+  render()}
+function finish(){running=false;finished=true;clearInterval(interval);remaining=0;preFor=-1;
+  beep(1040,.16);setTimeout(()=>beep(1320,.16),180);buzz(150);say('Geschafft');render()}
+
+/* ---------- Steuerung ---------- */
+function goTo(i){idx=Math.max(0,Math.min(i,Math.max(0,sequence.length-1)));
+  segmentTotal=sequence[idx]?sequence[idx].seconds:0;remaining=segmentTotal;finished=false;
+  preFor=-1;if(running){announce(idx,false);schedule()}
+  render()}
+function startPause(){
+  if(!sequence.length)return;
+  if(running){running=false;clearInterval(interval);remaining=Math.max(0,(endAt-Date.now())/1000);
+    stopSpeech();render();return}
+  unlockAudio();
+  if(finished||remaining<=0){finished=false;idx=0;segmentTotal=sequence[0].seconds;remaining=segmentTotal}
+  running=true;beep(880);requestWake();
+  announce(idx,false);preFor=-1;
+  schedule();render()}
+function reset(){running=false;finished=false;clearInterval(interval);preFor=-1;stopSpeech();goTo(0)}
+function stopSpeech(){try{if(canSpeak())speechSynthesis.cancel()}catch(e){}}
+function prev(){finished=false;goTo(idx-1)}
+function next(){if(idx>=sequence.length-1){finish()}else{goTo(idx+1);if(running)beep(sequence[idx].kind!=='work'?520:880)}}
+function loadWorkout(id){
+  if(inReader())closeReader();
+  workout=workouts.find(w=>w.id===id)||workouts[0];cat=workout.cat;
+  body.dataset.cat=cat;store.set('trainingTimerWorkout',workout.id);
+  running=false;finished=false;clearInterval(interval);
+  buildSequence();buildList();renderCards();
+  const noRest=workout.rest===0;restToggle.disabled=noRest;restWrap.classList.toggle('off',noRest);
+  restWrap.title=noRest?'Dieses Workout hat feste Pausen als eigene Schritte.':'Automatische Wechselzeit zwischen den Übungen';
+  idx=0;segmentTotal=sequence[0]?sequence[0].seconds:0;remaining=segmentTotal;
+  const notes=isNotes(workout);
+  detailTitle.textContent=workout.name;
+  detailMeta.textContent=workout.meta;
+  detailTime.textContent=notes?workout.notes.length+' Ideen':mmss(totalSeconds());
+  detailFoot.hidden=notes;optsEl.style.display=notes?'none':'';
+  noteBox.style.display=notes?'none':'';
+  render()}
+
+/* ---------- Vollbild & Wake Lock ---------- */
+async function requestWake(){
+  if(!('wakeLock'in navigator)){wakeFailed=true;return}
+  if(wakeLock)return;
+  try{wakeLock=await navigator.wakeLock.request('screen');wakeFailed=false;
+    wakeLock.addEventListener('release',()=>{wakeLock=null})}
+  catch(e){wakeFailed=true;noSleepStart()}}
+async function releaseWake(){try{if(wakeLock){await wakeLock.release();wakeLock=null}}catch(e){}}
+/* Der Bildschirm bleibt in der ganzen App wach, nicht nur im Training. */
+function keepAwake(){requestWake();noSleepStart()}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')noSleepStart()});
+async function enterFullscreen(){try{if(!document.fullscreenElement&&document.documentElement.requestFullscreen)
+  await document.documentElement.requestFullscreen({navigationUI:'hide'})}catch(e){}}
+async function leaveFullscreen(){try{if(document.fullscreenElement&&document.exitFullscreen)await document.exitFullscreen()}catch(e){}}
+/* Wake Lock gibt es nur in sicherem Kontext (https oder lokale Datei).
+   Wird die Seite z. B. über content:// geöffnet, fehlt die Schnittstelle.
+   Ersatz: ein winziges, stummes Video in Dauerschleife hält den Bildschirm ebenfalls wach. */
+let noSleepVideo=null,wakeFailed=false;
+function noSleepStart(){
+  if('wakeLock'in navigator&&!wakeFailed&&wakeLock)return;
+  try{
+    if(!noSleepVideo){
+      noSleepVideo=document.createElement('video');
+      noSleepVideo.setAttribute('playsinline','');noSleepVideo.setAttribute('webkit-playsinline','');
+      noSleepVideo.muted=true;noSleepVideo.loop=true;noSleepVideo.defaultMuted=true;
+      noSleepVideo.style.cssText='position:fixed;width:1px;height:1px;opacity:.01;pointer-events:none;left:0;bottom:0';
+      const mp4=document.createElement('source');mp4.type='video/mp4';mp4.src='data:video/mp4;base64,AAAAIGZ0eXBpc29tAAACAGlzb21pc28yYXZjMW1wNDEAAAN2bW9vdgAAAGxtdmhkAAAAAAAAAAAAAAAAAAAD6AAAA+gAAQAAAQAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAqB0cmFrAAAAXHRraGQAAAADAAAAAAAAAAAAAAABAAAAAAAAA+gAAAAAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAABAAAAAAAAAAAAAAAAAABAAAAAAEAAAABAAAAAAAAkZWR0cwAAABxlbHN0AAAAAAAAAAEAAAPoAAAQAAABAAAAAAIYbWRpYQAAACBtZGhkAAAAAAAAAAAAAAAAAAAoAAAAKABVxAAAAAAALWhkbHIAAAAAAAAAAHZpZGUAAAAAAAAAAAAAAABWaWRlb0hhbmRsZXIAAAABw21pbmYAAAAUdm1oZAAAAAEAAAAAAAAAAAAAACRkaW5mAAAAHGRyZWYAAAAAAAAAAQAAAAx1cmwgAAAAAQAAAYNzdGJsAAAAv3N0c2QAAAAAAAAAAQAAAK9hdmMxAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAEAAQABIAAAASAAAAAAAAAABFUxhdmM2MC4zMS4xMDIgbGlieDI2NAAAAAAAAAAAAAAAGP//AAAANWF2Y0MBZAAK/+EAGGdkAAqs2UQmwEQAAAMABAAAAwAoPEiWWAEABmjr48siwP34+AAAAAAQcGFzcAAAAAEAAAABAAAAFGJ0cnQAAAAAAAAYQAAAGEAAAAAYc3R0cwAAAAAAAAABAAAABQAACAAAAAAUc3RzcwAAAAAAAAABAAAAAQAAADhjdHRzAAAAAAAAAAUAAAABAAAQAAAAAAEAACgAAAAAAQAAEAAAAAABAAAAAAAAAAEAAAgAAAAAHHN0c2MAAAAAAAAAAQAAAAEAAAAFAAAAAQAAAChzdHN6AAAAAAAAAAAAAAAFAAAC1gAAAA4AAAAMAAAADAAAAAwAAAAUc3RjbwAAAAAAAAABAAADpgAAAGJ1ZHRhAAAAWm1ldGEAAAAAAAAAIWhkbHIAAAAAAAAAAG1kaXJhcHBsAAAAAAAAAAAAAAAALWlsc3QAAAAlqXRvbwAAAB1kYXRhAAAAAQAAAABMYXZmNjAuMTYuMTAwAAAACGZyZWUAAAMQbWRhdAAAAq0GBf//qdxF6b3m2Ui3lizYINkj7u94MjY0IC0gY29yZSAxNjQgcjMxMDggMzFlMTlmOSAtIEguMjY0L01QRUctNCBBVkMgY29kZWMgLSBDb3B5bGVmdCAyMDAzLTIwMjMgLSBodHRwOi8vd3d3LnZpZGVvbGFuLm9yZy94MjY0Lmh0bWwgLSBvcHRpb25zOiBjYWJhYz0xIHJlZj0zIGRlYmxvY2s9MTowOjAgYW5hbHlzZT0weDM6MHgxMTMgbWU9aGV4IHN1Ym1lPTcgcHN5PTEgcHN5X3JkPTEuMDA6MC4wMCBtaXhlZF9yZWY9MSBtZV9yYW5nZT0xNiBjaHJvbWFfbWU9MSB0cmVsbGlzPTEgOHg4ZGN0PTEgY3FtPTAgZGVhZHpvbmU9MjEsMTEgZmFzdF9wc2tpcD0xIGNocm9tYV9xcF9vZmZzZXQ9LTIgdGhyZWFkcz0xIGxvb2thaGVhZF90aHJlYWRzPTEgc2xpY2VkX3RocmVhZHM9MCBucj0wIGRlY2ltYXRlPTEgaW50ZXJsYWNlZD0wIGJsdXJheV9jb21wYXQ9MCBjb25zdHJhaW5lZF9pbnRyYT0wIGJmcmFtZXM9MyBiX3B5cmFtaWQ9MiBiX2FkYXB0PTEgYl9iaWFzPTAgZGlyZWN0PTEgd2VpZ2h0Yj0xIG9wZW5fZ29wPTAgd2VpZ2h0cD0yIGtleWludD0yNTAga2V5aW50X21pbj01IHNjZW5lY3V0PTQwIGludHJhX3JlZnJlc2g9MCByY19sb29rYWhlYWQ9NDAgcmM9Y3JmIG1idHJlZT0xIGNyZj0yMy4wIHFjb21wPTAuNjAgcXBtaW49MCBxcG1heD02OSBxcHN0ZXA9NCBpcF9yYXRpbz0xLjQwIGFxPTE6MS4wMACAAAAAIWWIhAAS//73rd+BTcMrNWu6Vzi0la3kA5MtsETUVp4u9wAAAApBmiRsQ//+qZ00AAAACEGeQniCHwLHAAAACAGeYXRD/wTEAAAACAGeY2pD/wTF';
+      const webm=document.createElement('source');webm.type='video/webm';webm.src='data:video/webm;base64,GkXfo59ChoEBQveBAULygQRC84EIQoKEd2VibUKHgQJChYECGFOAZwEAAAAAAAJKEU2bdLpNu4tTq4QVSalmU6yBoU27i1OrhBZUrmtTrIHYTbuMU6uEElTDZ1OsggEeTbuMU6uEHFO7a1OsggI07AEAAAAAAABZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAVSalmsirXsYMPQkBNgI1MYXZmNjAuMTYuMTAwV0GNTGF2ZjYwLjE2LjEwMESJiECPQAAAAAAAFlSua8GuAQAAAAAAADjXgQFzxYjkVKiuO2SqaZyBACK1nIN1bmSIgQCGhVZfVlA4g4EBI+ODhAvrwgDgibCBQLqBQJqBAhJUw2f8c3OgY8CAZ8iaRaOHRU5DT0RFUkSHjUxhdmY2MC4xNi4xMDBzc9ZjwItjxYjkVKiuO2SqaWfIoUWjh0VOQ09ERVJEh5RMYXZjNjAuMzEuMTAyIGxpYnZweGfIoUWjiERVUkFUSU9ORIeTMDA6MDA6MDEuMDAwMDAwMDAwAB9DtnVAj+eBAKOqgQAAgPACAJ0BKkAAQAAARwiFhYiFhIgCAgAGcDxCYAqyIPcwAP7/q1CAo5aBAMgA0QEAARAQABgAGFgv9AAIjoAAo5aBAZAA0QEAARAQABgAGFgv9AAIjoAAo5aBAlgA0QEAARAQABgAGFgv9AAIjoAAo5aBAyAA0QEAARAQABgAGFgv9AAIjoAAHFO7a5G7j7OBALeK94EB8YIBn/CBAw==';
+      noSleepVideo.appendChild(webm);noSleepVideo.appendChild(mp4);
+      document.body.appendChild(noSleepVideo)}
+    if(noSleepVideo.paused){const pr=noSleepVideo.play();if(pr&&pr.catch)pr.catch(()=>{})}
+  }catch(e){}}
+
+/* Vollbild ist erst nach einer Nutzeraktion erlaubt: beim ersten Tippen einmal anfordern.
+   Verlässt der Nutzer das Vollbild später selbst, wird es nicht wieder aufgezwungen. */
+let fsPrimed=false;
+function primeFullscreen(){if(fsPrimed)return;fsPrimed=true;enterFullscreen()}
+
+/* ---------- Ebenen ---------- */
+const inDetail=()=>body.classList.contains('detail');
+function openDetail(id){
+  loadWorkout(id);
+  body.classList.add('detail');
+  enterFullscreen();unlockAudio();keepAwake();
+  document.querySelector('.detail-body').scrollTop=0}
+function closeDetail(){
+  if(running){running=false;clearInterval(interval);remaining=Math.max(0,(endAt-Date.now())/1000);stopSpeech()}
+  body.classList.remove('detail');render()}
+
+function openRun(){if(!sequence.length||isNotes(workout))return;
+  body.classList.add('run');enterFullscreen();unlockAudio();paintNow();
+  if(!running)startPause();else{requestWake();render()}}
+function closeRun(){closeSheet();stopSpeech();if(running){running=false;clearInterval(interval);remaining=Math.max(0,(endAt-Date.now())/1000)}
+  body.classList.remove('run');body.classList.add('detail');render();
+  const act=list.querySelector('li.active');if(act&&act.scrollIntoView)act.scrollIntoView({block:'nearest'})}
+
+/* ---------- Events ---------- */
+tabsEl.addEventListener('click',e=>{const t=e.target.closest('.tab');if(!t)return;cat=t.dataset.cat;body.dataset.cat=cat;renderCards()});
+cardsEl.addEventListener('click',e=>{const c=e.target.closest('.wcard');if(!c)return;openDetail(c.dataset.id)});
+backBtn.addEventListener('click',closeDetail);
+goBtn.addEventListener('click',openRun);
+infoBtn.addEventListener('click',openSheet);
+sheetClose.addEventListener('click',closeSheet);
+sheet.addEventListener('click',e=>{if(e.target===sheet)closeSheet()});
+exitBtn.addEventListener('click',closeRun);
+startBtn.addEventListener('click',startPause);
+resetBtn.addEventListener('click',reset);
+prevBtn.addEventListener('click',prev);
+nextBtn.addEventListener('click',next);
+restToggle.addEventListener('change',()=>{savePrefs();loadWorkout(workout.id)});
+soundToggle.addEventListener('change',()=>{savePrefs();if(soundToggle.checked)unlockAudio()});
+vibrateToggle.addEventListener('change',savePrefs);
+speakToggle.addEventListener('change',()=>{savePrefs();stopSpeech();
+  if(speakToggle.checked)say('Ansage aktiv')});
+if(!canSpeak())speakWrap.style.display='none';
+readerClose.addEventListener('click',closeReader);
+readerPrev.addEventListener('click',()=>readerStep(-1));
+readerNext.addEventListener('click',()=>readerStep(1));
+
+list.addEventListener('click',e=>{
+  const note=e.target.closest('li[data-n]');
+  if(note){openReader(+note.dataset.n);return}
+  const btn=e.target.closest('button[data-start]');
+  if(btn){const t=sequence.findIndex(s=>s.originalIndex===+btn.dataset.start);if(t>=0)goTo(t);
+    btn.closest('li').classList.remove('open');return}
+  const li=e.target.closest('li[data-i],li[data-n]');if(!li)return;
+  const was=li.classList.contains('open');
+  items.forEach(x=>x.classList.remove('open'));
+  if(!was)li.classList.add('open')});
+document.addEventListener('keydown',e=>{
+  const t=e.target.tagName;if(t==='SELECT'||t==='INPUT'||t==='TEXTAREA')return;
+  if(e.key==='Escape'&&sheet.classList.contains('on')){closeSheet();return}
+  if(inReader()){
+    if(e.key==='Escape'){closeReader();return}
+    if(e.key==='ArrowRight'){e.preventDefault();readerStep(1);return}
+    if(e.key==='ArrowLeft'){e.preventDefault();readerStep(-1);return}
+    return}
+  if(e.key==='Escape'&&inRun()){closeRun();return}
+  if((e.key==='i'||e.key==='I')&&inRun()){sheet.classList.contains('on')?closeSheet():openSheet();return}
+  if(inDetail()&&!inRun()){
+    if(e.key==='Escape'){closeDetail();return}
+    if(e.code==='Space'){e.preventDefault();openRun();return}
+    return}
+  if(!inRun())return;
+  if(e.code==='Space'){e.preventDefault();startPause()}
+  else if(e.key==='ArrowRight'){e.preventDefault();next()}
+  else if(e.key==='ArrowLeft'){e.preventDefault();prev()}
+  else if(e.key==='r'||e.key==='R')reset()});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState!=='visible')return;
+  paintNow();keepAwake();if(running)tick()});
+document.addEventListener('click',()=>{keepAwake();primeFullscreen()},{passive:true});
+window.addEventListener('focus',keepAwake);
+if(!('vibrate'in navigator))vibrateWrap.style.display='none';
+if('serviceWorker'in navigator&&location.protocol.startsWith('http')){
+  navigator.serviceWorker.register('sw.js').catch(()=>{})}
+
+loadPrefs();keepAwake();
+const saved=store.get('trainingTimerWorkout');
+workout=workouts.find(w=>w.id===saved)||workouts[0];cat=workout.cat;
+renderTabs();loadWorkout(workout.id);
+document.querySelectorAll('.detail-body,.reader-body').forEach(el=>el.addEventListener('click',keepAwake,{passive:true}));
+</script>
+</body>
+</html>
